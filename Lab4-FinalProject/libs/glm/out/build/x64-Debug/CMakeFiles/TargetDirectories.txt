@@ -1,0 +1,2 @@
+C:/Users/M2-Winterfell/Graphics/Lab2/Libraries/include/glm/out/build/x64-Debug/CMakeFiles/edit_cache.dir
+C:/Users/M2-Winterfell/Graphics/Lab2/Libraries/include/glm/out/build/x64-Debug/CMakeFiles/rebuild_cache.dir

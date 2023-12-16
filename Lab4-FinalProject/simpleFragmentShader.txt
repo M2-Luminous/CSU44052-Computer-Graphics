@@ -1,0 +1,61 @@
+#version 330 core
+out vec4 FragColor;
+
+in vec3 Normal;
+in vec3 FragPos;
+in vec2 TexCoords;
+
+struct Spotlight {
+    vec3 position;
+    vec3 direction;
+    float cutOff;
+    float outerCutOff;
+    vec3 color;
+};
+
+#define NUM_SPOTLIGHTS 4
+uniform Spotlight spotlights[NUM_SPOTLIGHTS];
+uniform vec3 viewPos;
+uniform sampler2D texture_diffuse;
+
+void main()
+{
+    // Ambient lighting
+    float ambientStrength = 0.1;
+    vec3 ambient = ambientStrength * vec3(1.0, 1.0, 1.0); // Assuming white ambient light
+
+    vec3 result = vec3(0.0, 0.0, 0.0);
+    vec3 norm = normalize(Normal);
+    vec3 viewDir = normalize(viewPos - FragPos);
+
+    for(int i = 0; i < NUM_SPOTLIGHTS; i++) {
+        vec3 lightDir = normalize(spotlights[i].position - FragPos);
+
+        // Diffuse lighting
+        float diff = max(dot(norm, lightDir), 0.0);
+        vec3 diffuse = diff * spotlights[i].color;
+
+        // Spotlight intensity
+        float theta = dot(lightDir, normalize(-spotlights[i].direction)); 
+        float epsilon = (spotlights[i].cutOff - spotlights[i].outerCutOff);
+        float intensity = clamp((theta - spotlights[i].outerCutOff) / epsilon, 0.0, 1.0);
+
+        // Accumulate spotlight effect
+        result += (ambient + diffuse * intensity) * texture(texture_diffuse, TexCoords).rgb;
+    }
+
+    // Specular lighting (calculated after all spotlights are processed)
+    float specularStrength = 0.5;
+    vec3 specular = vec3(0.0, 0.0, 0.0);
+    for(int i = 0; i < NUM_SPOTLIGHTS; i++) {
+        vec3 lightDir = normalize(spotlights[i].position - FragPos);
+        vec3 reflectDir = reflect(-lightDir, norm);  
+        float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);
+        specular += specularStrength * spec * spotlights[i].color;
+    }
+
+    // Combine diffuse, ambient, and specular components
+    result += specular * texture(texture_diffuse, TexCoords).rgb;
+
+    FragColor = vec4(result, 1.0);
+}

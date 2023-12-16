@@ -1,0 +1,138 @@
+<?xml version="1.0" encoding="utf-8"?>
+<COLLADA xmlns="http://www.collada.org/2005/11/COLLADASchema" version="1.4.1">
+  <asset>
+    <contributor>
+      <author/>
+      <authoring_tool>FBX COLLADA exporter</authoring_tool>
+      <comments/>
+    </contributor>
+    <created>2022-01-22T16:52:10Z</created>
+    <keywords/>
+    <modified>2022-01-22T16:52:10Z</modified>
+    <revision/>
+    <subject/>
+    <title/>
+    <unit meter="0.010000" name="centimeter"/>
+    <up_axis>Y_UP</up_axis>
+  </asset>
+  <library_materials>
+    <material id="M_Prop_Grass_Default" name="M_Prop_Grass_Default">
+      <instance_effect url="#M_Prop_Grass_Default-fx"/>
+    </material>
+  </library_materials>
+  <library_effects>
+    <effect id="M_Prop_Grass_Default-fx" name="M_Prop_Grass_Default">
+      <profile_COMMON>
+        <technique sid="standard">
+          <lambert>
+            <emission>
+              <color sid="emission">0.000000  0.000000 0.000000 1.000000</color>
+            </emission>
+            <ambient>
+              <color sid="ambient">0.000000  0.000000 0.000000 1.000000</color>
+            </ambient>
+            <diffuse>
+              <color sid="diffuse">0.400000  0.400000 0.400000 1.000000</color>
+            </diffuse>
+            <transparent opaque="RGB_ZERO">
+              <color sid="transparent">0.000000  0.000000 0.000000 1.000000</color>
+            </transparent>
+            <transparency>
+              <float sid="transparency">1.000000</float>
+            </transparency>
+          </lambert>
+        </technique>
+      </profile_COMMON>
+    </effect>
+  </library_effects>
+  <library_geometries>
+    <geometry id="SM_Prop_Grass-lib" name="SM_Prop_GrassMesh">
+      <mesh>
+        <source id="SM_Prop_Grass-POSITION">
+          <float_array id="SM_Prop_Grass-POSITION-array" count="12">
+-0.500000 0.000000 0.500000
+0.500000 0.000000 0.500000
+-0.500000 0.000000 -0.500000
+0.500000 0.000000 -0.500000
+</float_array>
+          <technique_common>
+            <accessor source="#SM_Prop_Grass-POSITION-array" count="4" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="SM_Prop_Grass-Normal0">
+          <float_array id="SM_Prop_Grass-Normal0-array" count="12">
+0.000000 1.000000 0.000000
+0.000000 1.000000 0.000000
+0.000000 1.000000 0.000000
+0.000000 1.000000 0.000000
+</float_array>
+          <technique_common>
+            <accessor source="#SM_Prop_Grass-Normal0-array" count="4" stride="3">
+              <param name="X" type="float"/>
+              <param name="Y" type="float"/>
+              <param name="Z" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <source id="SM_Prop_Grass-UV0">
+          <float_array id="SM_Prop_Grass-UV0-array" count="8">
+0.001992 0.001992
+0.998008 0.001992
+0.998008 0.998008
+0.001992 0.998008
+</float_array>
+          <technique_common>
+            <accessor source="#SM_Prop_Grass-UV0-array" count="4" stride="2">
+              <param name="S" type="float"/>
+              <param name="T" type="float"/>
+            </accessor>
+          </technique_common>
+        </source>
+        <vertices id="SM_Prop_Grass-VERTEX">
+          <input semantic="POSITION" source="#SM_Prop_Grass-POSITION"/>
+          <input semantic="NORMAL" source="#SM_Prop_Grass-Normal0"/>
+        </vertices>
+        <triangles count="2" material="M_Prop_Grass_Default">
+          <input semantic="VERTEX" offset="0" source="#SM_Prop_Grass-VERTEX"/>
+          <input semantic="TEXCOORD" offset="1" set="0" source="#SM_Prop_Grass-UV0"/>
+          <p> 1 1 3 2 0 0 0 0 3 2 2 3</p>
+        </triangles>
+      </mesh>
+    </geometry>
+  </library_geometries>
+  <library_visual_scenes>
+    <visual_scene id="SM_Prop_Grass" name="SM_Prop_Grass">
+      <node name="SM_Prop_Grass" id="SM_Prop_Grass" sid="SM_Prop_Grass">
+        <matrix sid="matrix">1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000 0.000000 0.000000 0.000000 0.000000 1.000000</matrix>
+        <instance_geometry url="#SM_Prop_Grass-lib">
+          <bind_material>
+            <technique_common>
+              <instance_material symbol="M_Prop_Grass_Default" target="#M_Prop_Grass_Default"/>
+            </technique_common>
+          </bind_material>
+        </instance_geometry>
+        <extra>
+          <technique profile="FCOLLADA">
+            <visibility>1.000000</visibility>
+          </technique>
+        </extra>
+      </node>
+      <extra>
+        <technique profile="MAX3D">
+          <frame_rate>24.000000</frame_rate>
+        </technique>
+        <technique profile="FCOLLADA">
+          <start_time>0.041667</start_time>
+          <end_time>8.333333</end_time>
+        </technique>
+      </extra>
+    </visual_scene>
+  </library_visual_scenes>
+  <scene>
+    <instance_visual_scene url="#SM_Prop_Grass"/>
+  </scene>
+</COLLADA>

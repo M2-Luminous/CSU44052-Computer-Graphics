@@ -1,0 +1,9 @@
+﻿  main.cpp
+C:\Users\M2-Winterfell\Downloads\CSU44052-Computer-Graphics\Lab4-FinalProject\Lab04\main.cpp(72,1): warning C5208: unnamed class used in typedef name cannot declare members other than non-static data members, member enumerations, or member classes
+C:\Users\M2-Winterfell\Downloads\CSU44052-Computer-Graphics\Lab4-FinalProject\Lab04\main.cpp(124,11): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+C:\Users\M2-Winterfell\Downloads\CSU44052-Computer-Graphics\Lab4-FinalProject\Lab04\main.cpp(125,11): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+C:\Users\M2-Winterfell\Downloads\CSU44052-Computer-Graphics\Lab4-FinalProject\Lab04\main.cpp(131,10): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+C:\Users\M2-Winterfell\Downloads\CSU44052-Computer-Graphics\Lab4-FinalProject\Lab04\main.cpp(132,10): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+  maths_funcs.cpp
+  Generating Code...
+  Lab04.vcxproj -> C:\Users\M2-Winterfell\Downloads\CSU44052-Computer-Graphics\Lab4-FinalProject\build\executables\Debug\Lab 04.exe
