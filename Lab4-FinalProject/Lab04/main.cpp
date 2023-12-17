@@ -34,7 +34,10 @@
 #define MOON_NAME		"models/moon.dae"
 #define ZOMBIE_NAME		"models/carcass_eater.dae"
 #define ZOMBIE2_NAME	"models/swampGhoul.dae"
-#define SKELETON_NAME	"models/skeleton.dae"
+#define ZOMBIE3_NAME	"models/skeleton.dae"
+#define SKELETON_NAME	"models/human.dae"
+#define MONSTER_NAME	"models/monster_selfmade.dae"
+#define BAT_NAME		"models/bat_selfmade.dae"
 // Textures to Load
 #define CASTLE_TEXTURE		"textures/yellow_brick.jpg"
 #define	GROUND_TEXTURE		"textures/grass.jpg"
@@ -45,23 +48,33 @@
 #define	MOON_TEXTURE		"textures/moon_texture.jpg"
 #define	ZOMBIE_TEXTURE		"textures/eater.jpg"
 #define	ZOMBIE2_TEXTURE		"textures/swampGhoul.jpg"
-#define	SKELETON_TEXTURE	"textures/bone.jpg"
+#define	ZOMBIE3_TEXTURE		"textures/bone.jpg"
+#define	SKELETON_TEXTURE	"textures/skin.jpg"
+#define	MONSTER_TEXTURE		"textures/monster_skin.jpg"
+#define	BAT_TEXTURE			"textures/bat_skin.jpg"
 // Sounds to Load
-//#define	AMBIENT			"sounds/475635__o-ciz__forest-windy.wav"
+#define	AMBIENT			"sounds/apocalypse.wav"
+
+// Global variable
+int startTime = 0;
+float rotationSpeed = 4.0f; // Adjust the speed of rotation as needed
 
 // human position variables
 float humanPosX = 0.0f;
-float humanPosZ = 5.0f;
+float humanPosZ = 0.0f;
 float zombiePosX = -10.0f; // Adjust these initial values as needed
 float zombiePosZ = 0.0f;
 float zombie2PosX = 5.0f; // Adjust these initial values as needed
 float zombie2PosZ = 0.0f;
+
 float humanRotationAngle = 0.0f; // Rotation angle in degrees
 float zombieRotationAngle = 0.0f;
 float zombie2RotationAngle = 0.0f;
-float translationSpeed = 0.01f; // Adjust as needed
-float movementSpeed = 0.006f; // Adjust as needed for smooth chasing
-float collisionDistance = 4.0f; // Adjust as per the size of your models
+float zombie3RotationAngle = 0.0f;
+
+float translationSpeed = 0.03f; // Adjust as needed
+float movementSpeed = 0.015f; // Adjust as needed for smooth chasing
+float collisionDistance = 6.0f; // Adjust as per the size of your models
 // Check for collision with obstacles
 glm::vec3 obstacle1Pos(0.0f, 0.0f, 0.0f);
 glm::vec3 obstacle2Pos(zombiePosX, 0.0f, zombiePosZ);
@@ -112,9 +125,10 @@ int width = 1120;
 int height = 630;
 // Models
 ModelData castle, ground, tower, bell;
-ModelData veg, lamp, moon, zombie, zombie2, skeleton;
+ModelData veg, lamp, moon, zombie, zombie2, zombie3, skeleton, monster, bat;
 // Textures
-unsigned int CASTLE_tex, GROUND_tex, TOWER_tex, GRASS_tex, BELL_tex, LAMP_tex, MOON_tex, ZOMBIE_tex, ZOMBIE2_tex, SKELETON_tex;
+unsigned int CASTLE_tex, GROUND_tex, TOWER_tex, GRASS_tex, BELL_tex, LAMP_tex, MOON_tex;
+unsigned int ZOMBIE_tex, ZOMBIE2_tex, ZOMBIE3_tex, SKELETON_tex, MONSTER_tex, BAT_tex;
 // Buffers
 unsigned int VP_VBOs[14]; // vertex positions
 unsigned int VN_VBOs[14]; // vertex normals
@@ -123,8 +137,6 @@ unsigned int VAOs[1];
 
 GLuint loc1[8 * 3];
 GLuint loc2[6 * 3];
-
-
 
 // Camera
 vec3 camera_pos = vec3(0.0f, 0.0f, 0.0f);		// initial position of eye
@@ -481,7 +493,10 @@ void generateObjectBufferMesh() {
 	moon = load_mesh(MOON_NAME);
 	zombie = load_mesh(ZOMBIE_NAME);
 	zombie2 = load_mesh(ZOMBIE2_NAME);
+	zombie3 = load_mesh(ZOMBIE3_NAME);
 	skeleton = load_mesh(SKELETON_NAME);
+	monster = load_mesh(MONSTER_NAME);
+	bat = load_mesh(BAT_NAME);
 	// load textures
 	CASTLE_tex = load_tex(CASTLE_TEXTURE);
 	GROUND_tex = load_tex(GROUND_TEXTURE);
@@ -492,7 +507,10 @@ void generateObjectBufferMesh() {
 	MOON_tex = load_tex(MOON_TEXTURE);
 	ZOMBIE_tex = load_tex(ZOMBIE_TEXTURE);
 	ZOMBIE2_tex = load_tex(ZOMBIE2_TEXTURE);
+	ZOMBIE3_tex = load_tex(ZOMBIE3_TEXTURE);
 	SKELETON_tex = load_tex(SKELETON_TEXTURE);
+	MONSTER_tex = load_tex(MONSTER_TEXTURE);
+	BAT_tex = load_tex(BAT_TEXTURE);
 	// Generate Buffers
 	glGenBuffers(14, VP_VBOs); // position buffer
 	glGenBuffers(14, VN_VBOs); // normal buffer
@@ -539,6 +557,36 @@ void generateObjectBufferMesh() {
 	glBufferData(GL_ARRAY_BUFFER, skeleton.mPointCount * sizeof(vec3), &skeleton.mVertices[0], GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, VT_VBOs[3]);
 	glBufferData(GL_ARRAY_BUFFER, skeleton.mPointCount * sizeof(vec2), &skeleton.mTextureCoords[0], GL_STATIC_DRAW);
+	// Scene - Zombie3
+	loc1[12] = glGetAttribLocation(shaderProgramID, "vertex_position");
+	loc1[13] = glGetAttribLocation(shaderProgramID, "vertex_normal");
+	loc1[14] = glGetAttribLocation(shaderProgramID, "vertex_texture");
+	glBindBuffer(GL_ARRAY_BUFFER, VN_VBOs[4]);
+	glBufferData(GL_ARRAY_BUFFER, zombie3.mPointCount * sizeof(vec3), &zombie3.mNormals[0], GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, VP_VBOs[4]);
+	glBufferData(GL_ARRAY_BUFFER, zombie3.mPointCount * sizeof(vec3), &zombie3.mVertices[0], GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, VT_VBOs[4]);
+	glBufferData(GL_ARRAY_BUFFER, zombie3.mPointCount * sizeof(vec2), &zombie3.mTextureCoords[0], GL_STATIC_DRAW);
+	// Scene - Monster
+	loc1[15] = glGetAttribLocation(shaderProgramID, "vertex_position");
+	loc1[16] = glGetAttribLocation(shaderProgramID, "vertex_normal");
+	loc1[17] = glGetAttribLocation(shaderProgramID, "vertex_texture");
+	glBindBuffer(GL_ARRAY_BUFFER, VN_VBOs[5]);
+	glBufferData(GL_ARRAY_BUFFER, monster.mPointCount * sizeof(vec3), &monster.mNormals[0], GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, VP_VBOs[5]);
+	glBufferData(GL_ARRAY_BUFFER, monster.mPointCount * sizeof(vec3), &monster.mVertices[0], GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, VT_VBOs[5]);
+	glBufferData(GL_ARRAY_BUFFER, monster.mPointCount * sizeof(vec2), &monster.mTextureCoords[0], GL_STATIC_DRAW);
+	// Scene - Bat
+	loc1[18] = glGetAttribLocation(shaderProgramID, "vertex_position");
+	loc1[19] = glGetAttribLocation(shaderProgramID, "vertex_normal");
+	loc1[20] = glGetAttribLocation(shaderProgramID, "vertex_texture");
+	glBindBuffer(GL_ARRAY_BUFFER, VN_VBOs[6]);
+	glBufferData(GL_ARRAY_BUFFER, bat.mPointCount * sizeof(vec3), &bat.mNormals[0], GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, VP_VBOs[6]);
+	glBufferData(GL_ARRAY_BUFFER, bat.mPointCount * sizeof(vec3), &bat.mVertices[0], GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, VT_VBOs[6]);
+	glBufferData(GL_ARRAY_BUFFER, bat.mPointCount * sizeof(vec2), &bat.mTextureCoords[0], GL_STATIC_DRAW);
 	// Scene - CASTLE
 	loc2[0] = glGetAttribLocation(shaderProgramID, "vertex_position");
 	loc2[1] = glGetAttribLocation(shaderProgramID, "vertex_normal");
@@ -607,7 +655,7 @@ void display() {
 	glEnable(GL_DEPTH_TEST); // enable depth-testing
 	glDepthMask(GL_TRUE); //update the depth buffer
 	glDepthFunc(GL_LESS); // depth-testing interprets a smaller value as "closer"
-	glClearColor(0.4f, 0.06f, 0.0f, 1.0f); // Darker scarlet color
+	glClearColor(0.3f, 0.03f, 0.0f, 1.0f); // Darker scarlet color
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(shaderProgramID);
 	// Declare your uniform variables that will be used in your shader
@@ -668,7 +716,6 @@ void display() {
 	glDrawArrays(GL_TRIANGLES, 0, moon.mPointCount);
 	// Zombie
 	mat4 zombie_model = identity_mat4();
-	zombie_model = rotate_y_deg(zombie_model, 270.0f); // Apply rotation
 	zombie_model = rotate_y_deg(zombie_model, zombieRotationAngle); // Apply rotation
 	zombie_model = translate(zombie_model, vec3(zombiePosX, 0.5f, zombiePosZ));
 	zombie_model = scale(zombie_model, vec3(1.0f, 1.0f, 1.0f));
@@ -687,7 +734,7 @@ void display() {
 	glDrawArrays(GL_TRIANGLES, 0, zombie.mPointCount);
 	// Zombie 2
 	mat4 zombie_model2 = identity_mat4();
-	zombie_model2 = rotate_y_deg(zombie_model2, 180.0f); // Apply rotation
+	zombie_model2 = rotate_y_deg(zombie_model2, 90.0f); // Apply rotation
 	zombie_model2 = rotate_y_deg(zombie_model2, zombie2RotationAngle); // Apply rotation
 	zombie_model2 = translate(zombie_model2, vec3(zombie2PosX, 1.0f, zombie2PosZ));
 	zombie_model2 = scale(zombie_model2, vec3(2.0f, 2.0f, 2.0f));
@@ -706,10 +753,10 @@ void display() {
 	glDrawArrays(GL_TRIANGLES, 0, zombie2.mPointCount);
 	// Scene - Skeleton
 	mat4 skeleton_model = identity_mat4();
+	skeleton_model = rotate_x_deg(skeleton_model, 90.0f); // Apply rotation
 	skeleton_model = rotate_y_deg(skeleton_model, 90.0f); // Apply rotation
 	skeleton_model = rotate_y_deg(skeleton_model, humanRotationAngle); // Apply rotation
-	skeleton_model = translate(skeleton_model, vec3(humanPosX, 0.0f, humanPosZ));
-	skeleton_model = scale(skeleton_model, vec3(2.0f, 2.0f, 2.0f));
+	skeleton_model = translate(skeleton_model, vec3(humanPosX, 0.5f, humanPosZ));
 	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, skeleton_model.m);
 	glEnableVertexAttribArray(loc1[9]);
 	glBindBuffer(GL_ARRAY_BUFFER, VP_VBOs[3]);
@@ -723,11 +770,100 @@ void display() {
 	glVertexAttribPointer(loc1[11], 2, GL_FLOAT, GL_FALSE, 0, NULL);
 	glBindTexture(GL_TEXTURE_2D, SKELETON_tex);
 	glDrawArrays(GL_TRIANGLES, 0, skeleton.mPointCount);
+	// Zombie 3
+	// Array of positions for zombie instances
+	vec3 zombie3Positions[] = {
+		vec3(3.0f, 0.0f, -3.0f),  // Original position
+		vec3(-3.0f, 0.0f, -3.0f),  // top left position
+		vec3(3.0f, 0.0f,  3.0f),  // bottom right position
+		vec3(-3.0f, 0.0f,  3.0f)   // bottom left position
+	};
+	float zombie3Rotations[] = {
+		270,0,180,90
+	};
+	int currentTime = glutGet(GLUT_ELAPSED_TIME);
+	float elapsedTime = (currentTime - startTime) / 1000.0f; // Elapsed time in seconds
+	for (int i = 0; i < 4; ++i) {
+		mat4 zombie_model3 = identity_mat4();
+		zombie_model3 = rotate_y_deg(zombie_model3, zombie3Rotations[i]);
+		zombie_model3 = translate(zombie_model3, zombie3Positions[i]);
+		zombie_model3 = scale(zombie_model3, vec3(4.0f, 4.0f, 4.0f));
+		float angle = elapsedTime * rotationSpeed;
+		zombie_model3 = rotate_y_deg(zombie_model3, angle);
+		glUniformMatrix4fv(matrix_location, 1, GL_FALSE, zombie_model3.m);
+		glEnableVertexAttribArray(loc1[12]);
+		glBindBuffer(GL_ARRAY_BUFFER, VP_VBOs[4]);
+		glVertexAttribPointer(loc1[12], 3, GL_FLOAT, GL_FALSE, 0, NULL);
+		glEnableVertexAttribArray(loc1[13]);
+		glBindBuffer(GL_ARRAY_BUFFER, VN_VBOs[4]);
+		glVertexAttribPointer(loc1[13], 3, GL_FLOAT, GL_FALSE, 0, NULL);
+		glBindVertexArray(VAOs[0]);
+		glEnableVertexAttribArray(loc1[14]);
+		glBindBuffer(GL_ARRAY_BUFFER, VT_VBOs[4]);
+		glVertexAttribPointer(loc1[14], 2, GL_FLOAT, GL_FALSE, 0, NULL);
+		glBindTexture(GL_TEXTURE_2D, ZOMBIE3_tex);
+		glDrawArrays(GL_TRIANGLES, 0, zombie3.mPointCount);
+	}
+	// Monster
+	mat4 monster_model = identity_mat4();
+	monster_model = rotate_x_deg(monster_model, 90.0f); // Apply rotation
+	monster_model = scale(monster_model, vec3(50.0f, 50.0f, 50.0f));
+	monster_model = translate(monster_model, vec3(15.0f, 25.0f, -45.0f));
+	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, monster_model.m);
+	glEnableVertexAttribArray(loc1[15]);
+	glBindBuffer(GL_ARRAY_BUFFER, VP_VBOs[5]);
+	glVertexAttribPointer(loc1[15], 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(loc1[16]);
+	glBindBuffer(GL_ARRAY_BUFFER, VN_VBOs[5]);
+	glVertexAttribPointer(loc1[16], 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glBindVertexArray(VAOs[0]);
+	glEnableVertexAttribArray(loc1[17]);
+	glBindBuffer(GL_ARRAY_BUFFER, VT_VBOs[5]);
+	glVertexAttribPointer(loc1[17], 2, GL_FLOAT, GL_FALSE, 0, NULL);
+	glBindTexture(GL_TEXTURE_2D, MONSTER_tex);
+	glDrawArrays(GL_TRIANGLES, 0, monster.mPointCount);
+	// Bat
+	// Array of positions for kennel instances
+	vec3 batPositions[] = {
+		vec3(1.5f, 3.0f, -1.5f),    // top right position lower
+		vec3(-1.5f, 3.0f, -1.5f),   // top left position lower
+		vec3(1.5f, 3.0f,  1.5f),    // bottom right position lower
+		vec3(-1.5f, 3.0f,  1.5f),	// bottom left position lower
+		vec3(1.5f, 3.5f, 0.0f),	    // right position upper
+		vec3(-1.5f, 3.5f, 0.0f),    // left position upper
+		vec3(0.0f, 3.5f, 1.5f),     // top position upper
+		vec3(0.0f, 3.5f, -1.5f)     // down position upper
+	};
+	// Array of rotation angles (in degrees) for each kennel instance
+	float batRotations[] = {
+		90,180,0,270,0,180,270,90
+	};
+	for (int i = 0; i < 8; ++i) {
+		mat4 bat_model = identity_mat4();
+		bat_model = rotate_y_deg(bat_model, batRotations[i]); // Apply rotation
+		bat_model = translate(bat_model, batPositions[i]); // update y values during animation
+		bat_model = scale(bat_model, vec3(5.0f, 5.0f, 5.0f));
+		float angle2 = elapsedTime * rotationSpeed * 10;
+		bat_model = rotate_y_deg(bat_model, angle2);
+		glUniformMatrix4fv(matrix_location, 1, GL_FALSE, bat_model.m);
+		glEnableVertexAttribArray(loc1[18]);
+		glBindBuffer(GL_ARRAY_BUFFER, VP_VBOs[6]);
+		glVertexAttribPointer(loc1[18], 3, GL_FLOAT, GL_FALSE, 0, NULL);
+		glEnableVertexAttribArray(loc1[19]);
+		glBindBuffer(GL_ARRAY_BUFFER, VN_VBOs[6]);
+		glVertexAttribPointer(loc1[19], 3, GL_FLOAT, GL_FALSE, 0, NULL);
+		glBindVertexArray(VAOs[0]);
+		glEnableVertexAttribArray(loc1[20]);
+		glBindBuffer(GL_ARRAY_BUFFER, VT_VBOs[6]);
+		glVertexAttribPointer(loc1[20], 2, GL_FLOAT, GL_FALSE, 0, NULL);
+		glBindTexture(GL_TEXTURE_2D, BAT_tex);
+		glDrawArrays(GL_TRIANGLES, 0, bat.mPointCount);
+	}
 	// Root - Scene - CASTLE
-	mat4 bg = identity_mat4();
-	bg = translate(bg, vec3(0.0f, -10.0f, 0.0f));
-	bg = scale(bg, vec3(0.001f, 0.001f, 0.001f)); // Add the scaling transformation here
-	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, bg.m);
+	mat4 castle_model = identity_mat4();
+	castle_model = translate(castle_model, vec3(0.0f, -10.0f, 0.0f));
+	castle_model = scale(castle_model, vec3(0.001f, 0.001f, 0.001f)); // Add the scaling transformation here
+	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, castle_model.m);
 	glEnableVertexAttribArray(loc2[0]);
 	glBindBuffer(GL_ARRAY_BUFFER, VP_VBOs[8]);
 	glVertexAttribPointer(loc2[0], 3, GL_FLOAT, GL_FALSE, 0, NULL);
@@ -741,9 +877,9 @@ void display() {
 	glBindTexture(GL_TEXTURE_2D, CASTLE_tex);
 	glDrawArrays(GL_TRIANGLES, 0, castle.mPointCount);
 	// Child - Scene - ground
-	mat4 bgChild = identity_mat4();
-	bgChild = scale(bgChild, vec3(60.0f, 60.0f, 60.0f)); // Add the scaling transformation here
-	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, bgChild.m);
+	mat4 gound_model = identity_mat4();
+	gound_model = scale(gound_model, vec3(60.0f, 60.0f, 60.0f)); // Add the scaling transformation here
+	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, gound_model.m);
 	glEnableVertexAttribArray(loc2[3]);
 	glBindBuffer(GL_ARRAY_BUFFER, VP_VBOs[9]);
 	glVertexAttribPointer(loc2[3], 3, GL_FLOAT, GL_FALSE, 0, NULL);
@@ -756,9 +892,10 @@ void display() {
 	glVertexAttribPointer(loc2[5], 2, GL_FLOAT, GL_FALSE, 0, NULL);
 	glBindTexture(GL_TEXTURE_2D, GROUND_tex);
 	glDrawArrays(GL_TRIANGLES, 0, ground.mPointCount);
-	// Child - Scene - bell
+	// Scene - bell
 	mat4 belltower = identity_mat4();
 	belltower = translate(belltower, vec3(0.0f, 0.5f, 0.0f));
+	belltower = rotate_y_deg(belltower, 180.0f); // Apply rotation
 	belltower = scale(belltower, vec3(3.0f, 3.0f, 3.0f)); // Add the scaling transformation here
 	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, belltower.m);
 	glEnableVertexAttribArray(loc2[6]);
@@ -818,7 +955,6 @@ void display() {
 	glBindTexture(GL_TEXTURE_2D, GRASS_tex);
 	glDrawArrays(GL_TRIANGLES, 0, veg.mPointCount);
 	// Root - Scene - Kennel
-
 	// Array of positions for kennel instances
 	vec3 kennelPositions[] = {
 		vec3(11.0f, 0.0f, -11.0f),  // Original position
@@ -829,10 +965,7 @@ void display() {
 
 	// Array of rotation angles (in degrees) for each kennel instance
 	float kennelRotations[] = {
-		0,       // Rotation for the first kennel
-		0,       // Rotation for the second kennel, and so on...
-		180,
-		180
+		0,0,180,180
 	};
 
 	for (int i = 0; i < 4; ++i) {
@@ -899,29 +1032,31 @@ void updateScene() {
 		humanRotationAngle = atan2(lastPosZ - humanPosZ, humanPosX - lastPosX) * (180.0 / 3.1415926);
 	}
 
-	// first chasing
 	glm::vec3 humanPosition(humanPosX, 0.0f, humanPosZ);
+	// first chasing
 	glm::vec3 zombiePosition(zombiePosX, 0.0f, zombiePosZ);
 	glm::vec3 directionToHumanZombie = glm::normalize(humanPosition - zombiePosition);
-	if (glm::distance(zombiePosition, obstacle1Pos) < collisionDistance) {
+	if (glm::distance(zombiePosition, obstacle1Pos) < collisionDistance-0.5f) {
 		// Alter path to avoid collision
 		directionToHumanZombie = glm::vec3(-directionToHumanZombie.z, 0.0f, directionToHumanZombie.x);
 	}
-	zombiePosX += directionToHumanZombie.x * (movementSpeed+0.004f);
-	zombiePosZ += directionToHumanZombie.z * (movementSpeed+0.004f);
+	zombiePosX += directionToHumanZombie.x * (movementSpeed);
+	zombiePosZ += directionToHumanZombie.z * (movementSpeed);
 	zombieRotationAngle = atan2(-directionToHumanZombie.z, directionToHumanZombie.x) * (180.0 / 3.1415926);
 
 	// second chasing
 	glm::vec3 zombie2Position(zombie2PosX, 0.0f, zombie2PosZ);
 	glm::vec3 directionToHumanZombie2 = glm::normalize(humanPosition - zombie2Position);
 	// Check for collision with obstacles
-	if (glm::distance(zombiePosition, obstacle1Pos) < collisionDistance) {
+	if (glm::distance(zombie2Position, obstacle1Pos) < collisionDistance-3.5f) {
 		// Alter path to avoid collision
 		directionToHumanZombie2 = glm::vec3(-directionToHumanZombie2.z, 0.0f, directionToHumanZombie2.x);
 	}
 	zombie2PosX += directionToHumanZombie2.x * movementSpeed;
 	zombie2PosZ += directionToHumanZombie2.z * movementSpeed;
 	zombie2RotationAngle = atan2(-directionToHumanZombie2.z, directionToHumanZombie2.x) * (180.0 / 3.1415926);
+
+	
 
 	// Proximity Calculation: translation x,y,z - camera x,y,z
 	vec3 dist = vec3(-2.0f, 0.05f, 2.0f) - vec3(0.0f, 5.0f, 15.0f);
@@ -948,11 +1083,13 @@ void init()
 
 
 int main(int argc, char** argv) {
+	startTime = glutGet(GLUT_ELAPSED_TIME); // Record the start time
 	// Set up the window
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
 	glutInitWindowSize(width, height);
-	glutCreateWindow("Display");
+	glutCreateWindow("Apocalypse");
+	// Tell glut where the display function is
 	// Tell glut where the display function is
 	glutDisplayFunc(display);
 	glutIdleFunc(updateScene);
@@ -966,8 +1103,7 @@ int main(int argc, char** argv) {
 	}
 	// Set up objects and shaders
 	init();
-	// Begin infinite event loop
-	//PlaySound(TEXT(AMBIENT), NULL, SND_ASYNC);
+	PlaySound(TEXT(AMBIENT), NULL, SND_ASYNC);
 	glutMainLoop();
 	return 0;
 }
