@@ -126,6 +126,8 @@ int height = 630;
 // Models
 ModelData castle, ground, tower, bell;
 ModelData veg, lamp, moon, zombie, zombie2, zombie3, skeleton, monster, bat;
+// Terrain generation
+// ModelData terrain = generateTerrain(100, 100, 1.0f); // 100x100 grid with 1.0f size for each square
 // Textures
 unsigned int CASTLE_tex, GROUND_tex, TOWER_tex, GRASS_tex, BELL_tex, LAMP_tex, MOON_tex;
 unsigned int ZOMBIE_tex, ZOMBIE2_tex, ZOMBIE3_tex, SKELETON_tex, MONSTER_tex, BAT_tex;
@@ -587,6 +589,16 @@ void generateObjectBufferMesh() {
 	glBufferData(GL_ARRAY_BUFFER, bat.mPointCount * sizeof(vec3), &bat.mVertices[0], GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, VT_VBOs[6]);
 	glBufferData(GL_ARRAY_BUFFER, bat.mPointCount * sizeof(vec2), &bat.mTextureCoords[0], GL_STATIC_DRAW);
+	// Scene - terrain
+	//loc1[21] = glGetAttribLocation(shaderProgramID, "vertex_position");
+	//loc1[22] = glGetAttribLocation(shaderProgramID, "vertex_normal");
+	//loc1[23] = glGetAttribLocation(shaderProgramID, "vertex_texture");
+	//glBindBuffer(GL_ARRAY_BUFFER, VN_VBOs[7]);
+	//glBufferData(GL_ARRAY_BUFFER, terrain.mPointCount * sizeof(vec3), &terrain.mNormals[0], GL_STATIC_DRAW);
+	//glBindBuffer(GL_ARRAY_BUFFER, VP_VBOs[7]);
+	//glBufferData(GL_ARRAY_BUFFER, terrain.mPointCount * sizeof(vec3), &terrain.mVertices[0], GL_STATIC_DRAW);
+	//glBindBuffer(GL_ARRAY_BUFFER, VT_VBOs[7]);
+	//glBufferData(GL_ARRAY_BUFFER, terrain.mPointCount * sizeof(vec2), &terrain.mTextureCoords[0], GL_STATIC_DRAW);
 	// Scene - CASTLE
 	loc2[0] = glGetAttribLocation(shaderProgramID, "vertex_position");
 	loc2[1] = glGetAttribLocation(shaderProgramID, "vertex_normal");
@@ -859,6 +871,21 @@ void display() {
 		glBindTexture(GL_TEXTURE_2D, BAT_tex);
 		glDrawArrays(GL_TRIANGLES, 0, bat.mPointCount);
 	}
+	// Terrain
+	//mat4 terrainTransform = identity_mat4();
+	//glUniformMatrix4fv(matrix_location, 1, GL_FALSE, terrainTransform.m);
+	//glEnableVertexAttribArray(loc1[21]);
+	//glBindBuffer(GL_ARRAY_BUFFER, VP_VBOs[7]);
+	//glVertexAttribPointer(loc1[21], 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	//glEnableVertexAttribArray(loc1[22]);
+	//glBindBuffer(GL_ARRAY_BUFFER, VN_VBOs[7]);
+	//glVertexAttribPointer(loc1[22], 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	//glBindVertexArray(VAOs[0]);
+	//glEnableVertexAttribArray(loc1[23]);
+	//glBindBuffer(GL_ARRAY_BUFFER, VT_VBOs[7]);
+	//glVertexAttribPointer(loc1[23], 2, GL_FLOAT, GL_FALSE, 0, NULL);
+	//glBindTexture(GL_TEXTURE_2D, GRASS_tex);
+	//glDrawArrays(GL_TRIANGLES, 0, terrain.mPointCount);
 	// Root - Scene - CASTLE
 	mat4 castle_model = identity_mat4();
 	castle_model = translate(castle_model, vec3(0.0f, -10.0f, 0.0f));
@@ -1107,3 +1134,85 @@ int main(int argc, char** argv) {
 	glutMainLoop();
 	return 0;
 }
+//-----------------------------------------------------------------------------------------------------------
+//float lerp(float a, float b, float t) {
+//    return a + t * (b - a);
+//}
+//
+//float fade(float t) {
+//    // 6t^5 - 15t^4 + 10t^3
+//    return t * t * t * (t * (t * 6 - 15) + 10);
+//}
+//
+//float grad(int hash, float x, float y, float z) {
+//    int h = hash & 15;
+//    float u = h < 8 ? x : y;
+//    float v = h < 4 ? y : h == 12 || h == 14 ? x : z;
+//    return ((h & 1) == 0 ? u : -u) + ((h & 2) == 0 ? v : -v);
+//}
+//int permutation[256] = { 23 }; //Your permutation values go here
+//float perlinNoise(float x, float y, float z) {
+//    int X = (int)floor(x) & 255;
+//    int Y = (int)floor(y) & 255;
+//    int Z = (int)floor(z) & 255;
+//
+//    x -= floor(x);
+//    y -= floor(y);
+//    z -= floor(z);
+//
+//    float u = fade(x);
+//    float v = fade(y);
+//    float w = fade(z);
+//
+//    int p[512];
+//    for (int i = 0; i < 256; i++) p[256 + i] = p[i] = permutation[i];
+//
+//    Ensure that A, B, AA, AB, BA, and BB are within the array bounds
+//    int A = p[X & 255] + Y;
+//    int B = p[(X + 1) & 255] + Y;
+//    int AA = p[A & 255] + Z;
+//    int AB = p[(A + 1) & 255] + Z;
+//    int BA = p[B & 255] + Z;
+//    int BB = p[(B + 1) & 255] + Z;
+//
+//    return lerp(w, lerp(v, lerp(u, grad(p[AA], x, y, z), grad(p[BA], x - 1, y, z)), lerp(u, grad(p[AB], x, y - 1, z), grad(p[BB], x - 1, y - 1, z))), lerp(v, lerp(u, grad(p[AA + 1], x, y, z - 1), grad(p[BA + 1], x - 1, y, z - 1)), lerp(u, grad(p[AB + 1], x, y - 1, z - 1), grad(p[BB + 1], x - 1, y - 1, z - 1))));
+//}
+//ModelData generateTerrain(int gridX, int gridZ, float gridSize) {
+//    ModelData terrain;
+//    int vertexCount = gridX * gridZ;
+//    terrain.mPointCount = 6 * (gridX - 1) * (gridZ - 1);
+//
+//    for (int i = 0; i < gridZ; i++) {
+//        for (int j = 0; j < gridX; j++) {
+//            float x = j * gridSize;
+//            float z = i * gridSize;
+//            float y = perlinNoise(x * 0.1, 0.0f, z * 0.1); // Adjust x and z scaling factors as needed
+//
+//            terrain.mVertices.push_back(vec3(x, y, z));
+//            terrain.mNormals.push_back(vec3(0, 1, 0)); // Placeholder normal, calculate based on surrounding vertices for better results.
+//            terrain.mTextureCoords.push_back(vec2((float)j / (gridX - 1), (float)i / (gridZ - 1)));
+//        }
+//    }
+//    for (int gz = 0; gz < gridZ - 1; gz++) {
+//        for (int gx = 0; gx < gridX - 1; gx++) {
+//            int topLeft = (gz * gridX) + gx;
+//            int topRight = topLeft + 1;
+//            int bottomLeft = ((gz + 1) * gridX) + gx;
+//            int bottomRight = bottomLeft + 1;
+//
+//            // Triangle 1
+//            terrain.mIndices.push_back(topLeft);
+//            terrain.mIndices.push_back(bottomLeft);
+//            terrain.mIndices.push_back(topRight);
+//
+//            // Triangle 2
+//            terrain.mIndices.push_back(topRight);
+//            terrain.mIndices.push_back(bottomLeft);
+//            terrain.mIndices.push_back(bottomRight);
+//        }
+//    }
+//
+//    return terrain;
+//}
+
+
