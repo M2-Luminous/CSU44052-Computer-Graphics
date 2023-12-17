@@ -34,18 +34,39 @@
 #define MOON_NAME		"models/moon.dae"
 #define ZOMBIE_NAME		"models/carcass_eater.dae"
 #define ZOMBIE2_NAME	"models/swampGhoul.dae"
+#define SKELETON_NAME	"models/skeleton.dae"
 // Textures to Load
-#define CASTLE_TEXTURE	"textures/yellow_brick.jpg"
-#define	GROUND_TEXTURE	"textures/grass.jpg"
-#define	TOWER_TEXTURE	"textures/creamy_brick.jpg"
-#define	GRASS_TEXTURE	"textures/grass.jpg"
-#define	BELL_TEXTURE	"textures/milk_brick.jpg"
-#define	LAMP_TEXTURE	"textures/metal.jpg"
-#define	MOON_TEXTURE	"textures/moon_texture.jpg"
-#define	ZOMBIE_TEXTURE	"textures/eater.jpg"
-#define	ZOMBIE2_TEXTURE	"textures/swampGhoul.jpg"
+#define CASTLE_TEXTURE		"textures/yellow_brick.jpg"
+#define	GROUND_TEXTURE		"textures/grass.jpg"
+#define	TOWER_TEXTURE		"textures/creamy_brick.jpg"
+#define	GRASS_TEXTURE		"textures/grass.jpg"
+#define	BELL_TEXTURE		"textures/milk_brick.jpg"
+#define	LAMP_TEXTURE		"textures/metal.jpg"
+#define	MOON_TEXTURE		"textures/moon_texture.jpg"
+#define	ZOMBIE_TEXTURE		"textures/eater.jpg"
+#define	ZOMBIE2_TEXTURE		"textures/swampGhoul.jpg"
+#define	SKELETON_TEXTURE	"textures/bone.jpg"
 // Sounds to Load
 //#define	AMBIENT			"sounds/475635__o-ciz__forest-windy.wav"
+
+// human position variables
+float humanPosX = 0.0f;
+float humanPosZ = 5.0f;
+float zombiePosX = -10.0f; // Adjust these initial values as needed
+float zombiePosZ = 0.0f;
+float zombie2PosX = 5.0f; // Adjust these initial values as needed
+float zombie2PosZ = 0.0f;
+float humanRotationAngle = 0.0f; // Rotation angle in degrees
+float zombieRotationAngle = 0.0f;
+float zombie2RotationAngle = 0.0f;
+float translationSpeed = 0.01f; // Adjust as needed
+float movementSpeed = 0.006f; // Adjust as needed for smooth chasing
+float collisionDistance = 4.0f; // Adjust as per the size of your models
+// Check for collision with obstacles
+glm::vec3 obstacle1Pos(0.0f, 0.0f, 0.0f);
+glm::vec3 obstacle2Pos(zombiePosX, 0.0f, zombiePosZ);
+glm::vec3 obstacle3Pos(zombie2PosX, 0.0f, zombie2PosZ);
+glm::vec3 obstacle4Pos(humanPosX, 0.0f, humanPosZ);
 
 // Camera
 glm::vec3 cameraPos = glm::vec3(0.0f, 5.0f, 15.0f);
@@ -64,6 +85,11 @@ bool keyS = false;
 bool keyD = false;
 bool keyQ = false;
 bool keyE = false;
+// Arrow key states
+bool KeyUp = false;
+bool KeyDown = false;
+bool KeyLeft = false;
+bool KeyRight = false;
 // Mouse button state
 bool leftButtonPressed = false;
 
@@ -86,9 +112,9 @@ int width = 1120;
 int height = 630;
 // Models
 ModelData castle, ground, tower, bell;
-ModelData veg, lamp, moon, zombie, zombie2;
+ModelData veg, lamp, moon, zombie, zombie2, skeleton;
 // Textures
-unsigned int CASTLE_TEXTURE_tex, GROUND_tex, TOWER_TEXTURE_tex, GRASS_tex, BELL_tex, LAMP_tex, MOON_tex, ZOMBIE_tex, ZOMBIE2_tex;
+unsigned int CASTLE_tex, GROUND_tex, TOWER_tex, GRASS_tex, BELL_tex, LAMP_tex, MOON_tex, ZOMBIE_tex, ZOMBIE2_tex, SKELETON_tex;
 // Buffers
 unsigned int VP_VBOs[14]; // vertex positions
 unsigned int VN_VBOs[14]; // vertex normals
@@ -98,21 +124,9 @@ unsigned int VAOs[1];
 GLuint loc1[8 * 3];
 GLuint loc2[6 * 3];
 
-GLfloat rotate_y = 0.0f;
-GLfloat rotate_x = 0.0f;
-GLfloat rotate_z = 0.0f;
 
-// translation
-float translation_x = -2.0f;
-float translation_y = 0.05f;
-float translation_z = 2.0f;
+
 // Camera
-float camera_x = 0.0f;
-float camera_y = 5.0f;
-float camera_z = 15.0f;
-float target_x = 0.0f;
-float target_y = 0.0f;
-float target_z = 0.0f;
 vec3 camera_pos = vec3(0.0f, 0.0f, 0.0f);		// initial position of eye
 vec3 camera_target = vec3(0.0f, 0.0f, 0.0f);	// initial position of target
 vec3 up = vec3(0.0f, 1.0f, 0.0f);				// up vector
@@ -218,6 +232,42 @@ void keyUp(unsigned char key, int x, int y) {
 		break;
 	}
 }
+
+void specialKeyPress(int key, int x, int y) {
+	switch (key) {
+	case GLUT_KEY_UP:
+		KeyUp = true;
+		break;
+	case GLUT_KEY_DOWN:
+		KeyDown = true;
+		break;
+	case GLUT_KEY_LEFT:
+		KeyLeft = true;
+		break;
+	case GLUT_KEY_RIGHT:
+		KeyRight = true;
+		break;
+	}
+}
+
+void specialKeyUp(int key, int x, int y) {
+	switch (key) {
+	case GLUT_KEY_UP:
+		KeyUp = false;
+		break;
+	case GLUT_KEY_DOWN:
+		KeyDown = false;
+		break;
+	case GLUT_KEY_LEFT:
+		KeyLeft = false;
+		break;
+	case GLUT_KEY_RIGHT:
+		KeyRight = false;
+		break;
+	}
+}
+
+
 
 // Define a structure to hold spotlight properties
 struct Spotlight {
@@ -431,16 +481,18 @@ void generateObjectBufferMesh() {
 	moon = load_mesh(MOON_NAME);
 	zombie = load_mesh(ZOMBIE_NAME);
 	zombie2 = load_mesh(ZOMBIE2_NAME);
+	skeleton = load_mesh(SKELETON_NAME);
 	// load textures
-	CASTLE_TEXTURE_tex = load_tex(CASTLE_TEXTURE);
+	CASTLE_tex = load_tex(CASTLE_TEXTURE);
 	GROUND_tex = load_tex(GROUND_TEXTURE);
-	TOWER_TEXTURE_tex = load_tex(TOWER_TEXTURE);
+	TOWER_tex = load_tex(TOWER_TEXTURE);
 	GRASS_tex = load_tex(GRASS_TEXTURE);
 	BELL_tex = load_tex(BELL_TEXTURE);
 	LAMP_tex = load_tex(LAMP_TEXTURE);
 	MOON_tex = load_tex(MOON_TEXTURE);
 	ZOMBIE_tex = load_tex(ZOMBIE_TEXTURE);
 	ZOMBIE2_tex = load_tex(ZOMBIE2_TEXTURE);
+	SKELETON_tex = load_tex(SKELETON_TEXTURE);
 	// Generate Buffers
 	glGenBuffers(14, VP_VBOs); // position buffer
 	glGenBuffers(14, VN_VBOs); // normal buffer
@@ -467,7 +519,7 @@ void generateObjectBufferMesh() {
 	glBufferData(GL_ARRAY_BUFFER, zombie.mPointCount * sizeof(vec3), &zombie.mNormals[0], GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, VT_VBOs[1]);
 	glBufferData(GL_ARRAY_BUFFER, zombie.mPointCount * sizeof(vec2), &zombie.mTextureCoords[0], GL_STATIC_DRAW);
-	// Dog - Eyelids
+	// Scene - Zombie2
 	loc1[6] = glGetAttribLocation(shaderProgramID, "vertex_position");
 	loc1[7] = glGetAttribLocation(shaderProgramID, "vertex_normal");
 	loc1[8] = glGetAttribLocation(shaderProgramID, "vertex_texture");
@@ -477,6 +529,16 @@ void generateObjectBufferMesh() {
 	glBufferData(GL_ARRAY_BUFFER, zombie2.mPointCount * sizeof(vec3), &zombie2.mVertices[0], GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, VT_VBOs[2]);
 	glBufferData(GL_ARRAY_BUFFER, zombie2.mPointCount * sizeof(vec2), &zombie2.mTextureCoords[0], GL_STATIC_DRAW);
+	// Scene - Skeleton
+	loc1[9] = glGetAttribLocation(shaderProgramID, "vertex_position");
+	loc1[10] = glGetAttribLocation(shaderProgramID, "vertex_normal");
+	loc1[11] = glGetAttribLocation(shaderProgramID, "vertex_texture");
+	glBindBuffer(GL_ARRAY_BUFFER, VN_VBOs[3]);
+	glBufferData(GL_ARRAY_BUFFER, skeleton.mPointCount * sizeof(vec3), &skeleton.mNormals[0], GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, VP_VBOs[3]);
+	glBufferData(GL_ARRAY_BUFFER, skeleton.mPointCount * sizeof(vec3), &skeleton.mVertices[0], GL_STATIC_DRAW);
+	glBindBuffer(GL_ARRAY_BUFFER, VT_VBOs[3]);
+	glBufferData(GL_ARRAY_BUFFER, skeleton.mPointCount * sizeof(vec2), &skeleton.mTextureCoords[0], GL_STATIC_DRAW);
 	// Scene - CASTLE
 	loc2[0] = glGetAttribLocation(shaderProgramID, "vertex_position");
 	loc2[1] = glGetAttribLocation(shaderProgramID, "vertex_normal");
@@ -606,8 +668,9 @@ void display() {
 	glDrawArrays(GL_TRIANGLES, 0, moon.mPointCount);
 	// Zombie
 	mat4 zombie_model = identity_mat4();
-	zombie_model = rotate_y_deg(zombie_model, 180.0f); // Apply rotation
-	zombie_model = translate(zombie_model, vec3(-10.0f, 0.5f, 0.0f));
+	zombie_model = rotate_y_deg(zombie_model, 270.0f); // Apply rotation
+	zombie_model = rotate_y_deg(zombie_model, zombieRotationAngle); // Apply rotation
+	zombie_model = translate(zombie_model, vec3(zombiePosX, 0.5f, zombiePosZ));
 	zombie_model = scale(zombie_model, vec3(1.0f, 1.0f, 1.0f));
 	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, zombie_model.m);
 	glEnableVertexAttribArray(loc1[3]);
@@ -624,8 +687,9 @@ void display() {
 	glDrawArrays(GL_TRIANGLES, 0, zombie.mPointCount);
 	// Zombie 2
 	mat4 zombie_model2 = identity_mat4();
-	zombie_model2 = rotate_y_deg(zombie_model2, 0.0f); // Apply rotation
-	zombie_model2 = translate(zombie_model2, vec3(5.0f, 1.0f, 0.0f));
+	zombie_model2 = rotate_y_deg(zombie_model2, 180.0f); // Apply rotation
+	zombie_model2 = rotate_y_deg(zombie_model2, zombie2RotationAngle); // Apply rotation
+	zombie_model2 = translate(zombie_model2, vec3(zombie2PosX, 1.0f, zombie2PosZ));
 	zombie_model2 = scale(zombie_model2, vec3(2.0f, 2.0f, 2.0f));
 	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, zombie_model2.m);
 	glEnableVertexAttribArray(loc1[6]);
@@ -640,6 +704,25 @@ void display() {
 	glVertexAttribPointer(loc1[8], 2, GL_FLOAT, GL_FALSE, 0, NULL);
 	glBindTexture(GL_TEXTURE_2D, ZOMBIE2_tex);
 	glDrawArrays(GL_TRIANGLES, 0, zombie2.mPointCount);
+	// Scene - Skeleton
+	mat4 skeleton_model = identity_mat4();
+	skeleton_model = rotate_y_deg(skeleton_model, 90.0f); // Apply rotation
+	skeleton_model = rotate_y_deg(skeleton_model, humanRotationAngle); // Apply rotation
+	skeleton_model = translate(skeleton_model, vec3(humanPosX, 0.0f, humanPosZ));
+	skeleton_model = scale(skeleton_model, vec3(2.0f, 2.0f, 2.0f));
+	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, skeleton_model.m);
+	glEnableVertexAttribArray(loc1[9]);
+	glBindBuffer(GL_ARRAY_BUFFER, VP_VBOs[3]);
+	glVertexAttribPointer(loc1[9], 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glEnableVertexAttribArray(loc1[10]);
+	glBindBuffer(GL_ARRAY_BUFFER, VN_VBOs[3]);
+	glVertexAttribPointer(loc1[10], 3, GL_FLOAT, GL_FALSE, 0, NULL);
+	glBindVertexArray(VAOs[0]);
+	glEnableVertexAttribArray(loc1[11]);
+	glBindBuffer(GL_ARRAY_BUFFER, VT_VBOs[3]);
+	glVertexAttribPointer(loc1[11], 2, GL_FLOAT, GL_FALSE, 0, NULL);
+	glBindTexture(GL_TEXTURE_2D, SKELETON_tex);
+	glDrawArrays(GL_TRIANGLES, 0, skeleton.mPointCount);
 	// Root - Scene - CASTLE
 	mat4 bg = identity_mat4();
 	bg = translate(bg, vec3(0.0f, -10.0f, 0.0f));
@@ -655,7 +738,7 @@ void display() {
 	glEnableVertexAttribArray(loc2[2]);
 	glBindBuffer(GL_ARRAY_BUFFER, VT_VBOs[8]);
 	glVertexAttribPointer(loc2[2], 2, GL_FLOAT, GL_FALSE, 0, NULL);
-	glBindTexture(GL_TEXTURE_2D, CASTLE_TEXTURE_tex);
+	glBindTexture(GL_TEXTURE_2D, CASTLE_tex);
 	glDrawArrays(GL_TRIANGLES, 0, castle.mPointCount);
 	// Child - Scene - ground
 	mat4 bgChild = identity_mat4();
@@ -746,10 +829,10 @@ void display() {
 
 	// Array of rotation angles (in degrees) for each kennel instance
 	float kennelRotations[] = {
-		rotate_y,       // Rotation for the first kennel
-		rotate_y,  // Rotation for the second kennel, and so on...
-		rotate_y + 180,
-		rotate_y + 180
+		0,       // Rotation for the first kennel
+		0,       // Rotation for the second kennel, and so on...
+		180,
+		180
 	};
 
 	for (int i = 0; i < 4; ++i) {
@@ -774,12 +857,11 @@ void display() {
 		glBindBuffer(GL_ARRAY_BUFFER, VT_VBOs[13]);
 		glVertexAttribPointer(loc2[17], 2, GL_FLOAT, GL_FALSE, 0, NULL);
 
-		glBindTexture(GL_TEXTURE_2D, TOWER_TEXTURE_tex);
+		glBindTexture(GL_TEXTURE_2D, TOWER_tex);
 		glDrawArrays(GL_TRIANGLES, 0, tower.mPointCount);
 	}
 	glutSwapBuffers();
 }
-
 
 void updateScene() {
 	// Delta Calculation
@@ -806,14 +888,43 @@ void updateScene() {
 	if (keyQ) cameraPos += cameraSpeed * cameraUp;
 	if (keyE) cameraPos -= cameraSpeed * cameraUp;
 
-	// Diagonal movement
-	if (keyW && keyA) cameraPos += glm::normalize(glm::cross(cameraUp, cameraFront)) * cameraSpeed;
-	if (keyW && keyD) cameraPos -= glm::normalize(glm::cross(cameraUp, cameraFront)) * cameraSpeed;
-	if (keyS && keyA) cameraPos -= glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
-	if (keyS && keyD) cameraPos += glm::normalize(glm::cross(cameraFront, cameraUp)) * cameraSpeed;
+	float lastPosX = humanPosX;
+	float lastPosZ = humanPosZ;
+	if (KeyUp) humanPosZ -= translationSpeed;
+	if (KeyDown) humanPosZ += translationSpeed;
+	if (KeyLeft) humanPosX -= translationSpeed;
+	if (KeyRight) humanPosX += translationSpeed;
+	// Calculate rotation angle
+	if (humanPosX != lastPosX || humanPosZ != lastPosZ) {
+		humanRotationAngle = atan2(lastPosZ - humanPosZ, humanPosX - lastPosX) * (180.0 / 3.1415926);
+	}
 
-	// Proximity Calculation
-	vec3 dist = vec3(translation_x, translation_y, translation_z) - vec3(camera_x, camera_y, camera_z);
+	// first chasing
+	glm::vec3 humanPosition(humanPosX, 0.0f, humanPosZ);
+	glm::vec3 zombiePosition(zombiePosX, 0.0f, zombiePosZ);
+	glm::vec3 directionToHumanZombie = glm::normalize(humanPosition - zombiePosition);
+	if (glm::distance(zombiePosition, obstacle1Pos) < collisionDistance) {
+		// Alter path to avoid collision
+		directionToHumanZombie = glm::vec3(-directionToHumanZombie.z, 0.0f, directionToHumanZombie.x);
+	}
+	zombiePosX += directionToHumanZombie.x * (movementSpeed+0.004f);
+	zombiePosZ += directionToHumanZombie.z * (movementSpeed+0.004f);
+	zombieRotationAngle = atan2(-directionToHumanZombie.z, directionToHumanZombie.x) * (180.0 / 3.1415926);
+
+	// second chasing
+	glm::vec3 zombie2Position(zombie2PosX, 0.0f, zombie2PosZ);
+	glm::vec3 directionToHumanZombie2 = glm::normalize(humanPosition - zombie2Position);
+	// Check for collision with obstacles
+	if (glm::distance(zombiePosition, obstacle1Pos) < collisionDistance) {
+		// Alter path to avoid collision
+		directionToHumanZombie2 = glm::vec3(-directionToHumanZombie2.z, 0.0f, directionToHumanZombie2.x);
+	}
+	zombie2PosX += directionToHumanZombie2.x * movementSpeed;
+	zombie2PosZ += directionToHumanZombie2.z * movementSpeed;
+	zombie2RotationAngle = atan2(-directionToHumanZombie2.z, directionToHumanZombie2.x) * (180.0 / 3.1415926);
+
+	// Proximity Calculation: translation x,y,z - camera x,y,z
+	vec3 dist = vec3(-2.0f, 0.05f, 2.0f) - vec3(0.0f, 5.0f, 15.0f);
 	float x_distance = dist.v[0];
 	float z_distance = dist.v[2];
 	// Draw the next frame
@@ -826,6 +937,8 @@ void init()
 	GLuint shaderProgramID = CompileShaders();
 	// Load mesh into a vertex buffer array
 	glutKeyboardFunc(keypress);
+	glutSpecialFunc(specialKeyPress); // Register the special key press function
+	glutSpecialUpFunc(specialKeyUp); // Register the special key up function
 	glutKeyboardUpFunc(keyUp);
 	glutMouseFunc(mouseButton);
 	glutMotionFunc(mouseMove); // Register mouse move callback
@@ -851,7 +964,7 @@ int main(int argc, char** argv) {
 		fprintf(stderr, "Error: '%s'\n", glewGetErrorString(res));
 		return 1;
 	}
-	// Set up your objects and shaders
+	// Set up objects and shaders
 	init();
 	// Begin infinite event loop
 	//PlaySound(TEXT(AMBIENT), NULL, SND_ASYNC);
