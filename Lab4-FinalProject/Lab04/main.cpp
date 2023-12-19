@@ -749,7 +749,7 @@ void display() {
 	zombie_model2 = rotate_y_deg(zombie_model2, 90.0f); // Apply rotation
 	zombie_model2 = rotate_y_deg(zombie_model2, zombie2RotationAngle); // Apply rotation
 	zombie_model2 = translate(zombie_model2, vec3(zombie2PosX, 1.0f, zombie2PosZ));
-	zombie_model2 = scale(zombie_model2, vec3(2.0f, 2.0f, 2.0f));
+	zombie_model2 = scale(zombie_model2, vec3(1.0f, 1.0f, 1.0f));
 	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, zombie_model2.m);
 	glEnableVertexAttribArray(loc1[6]);
 	glBindBuffer(GL_ARRAY_BUFFER, VP_VBOs[2]);
@@ -1054,6 +1054,8 @@ void updateScene() {
 	if (KeyDown) humanPosZ += translationSpeed;
 	if (KeyLeft) humanPosX -= translationSpeed;
 	if (KeyRight) humanPosX += translationSpeed;
+	// Define a threshold distance for when to stop chasing
+	const float stopChasingDistance = 0.05f;
 	// Calculate rotation angle
 	if (humanPosX != lastPosX || humanPosZ != lastPosZ) {
 		humanRotationAngle = atan2(lastPosZ - humanPosZ, humanPosX - lastPosX) * (180.0 / 3.1415926);
@@ -1067,20 +1069,24 @@ void updateScene() {
 		// Alter path to avoid collision
 		directionToHumanZombie = glm::vec3(-directionToHumanZombie.z, 0.0f, directionToHumanZombie.x);
 	}
-	zombiePosX += directionToHumanZombie.x * (movementSpeed);
-	zombiePosZ += directionToHumanZombie.z * (movementSpeed);
+	if (glm::distance(zombiePosition, humanPosition) > stopChasingDistance) {
+		zombiePosX += directionToHumanZombie.x * (movementSpeed - 0.002);
+		zombiePosZ += directionToHumanZombie.z * (movementSpeed - 0.002);
+	}
 	zombieRotationAngle = atan2(-directionToHumanZombie.z, directionToHumanZombie.x) * (180.0 / 3.1415926);
 
 	// second chasing
 	glm::vec3 zombie2Position(zombie2PosX, 0.0f, zombie2PosZ);
 	glm::vec3 directionToHumanZombie2 = glm::normalize(humanPosition - zombie2Position);
 	// Check for collision with obstacles
-	if (glm::distance(zombie2Position, obstacle1Pos) < collisionDistance-3.5f) {
+	if (glm::distance(zombie2Position, obstacle1Pos) < collisionDistance-0.5f) {
 		// Alter path to avoid collision
 		directionToHumanZombie2 = glm::vec3(-directionToHumanZombie2.z, 0.0f, directionToHumanZombie2.x);
 	}
-	zombie2PosX += directionToHumanZombie2.x * movementSpeed;
-	zombie2PosZ += directionToHumanZombie2.z * movementSpeed;
+	if (glm::distance(zombie2Position, humanPosition) > stopChasingDistance) {
+		zombie2PosX += directionToHumanZombie2.x * (movementSpeed + 0.002);
+		zombie2PosZ += directionToHumanZombie2.z * (movementSpeed + 0.002);
+	}
 	zombie2RotationAngle = atan2(-directionToHumanZombie2.z, directionToHumanZombie2.x) * (180.0 / 3.1415926);
 
 	
@@ -1130,7 +1136,7 @@ int main(int argc, char** argv) {
 	}
 	// Set up objects and shaders
 	init();
-	PlaySound(TEXT(AMBIENT), NULL, SND_ASYNC);
+	//PlaySound(TEXT(AMBIENT), NULL, SND_ASYNC);
 	glutMainLoop();
 	return 0;
 }
