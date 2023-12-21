@@ -28,10 +28,10 @@
 #define CASTLE_NAME		"models/castle.dae"
 #define GROUND_NAME		"models/plane.dae"
 #define TOWER_NAME		"models/watchtower.dae"
-#define GRASS_NAME		"models/vegetation.dae"
+#define SKY_NAME		"models/plane.dae"
 #define BELL_NAME		"models/bell.dae"
 #define LAMP_NAME		"models/street_light.dae"
-#define MOON_NAME		"models/moon.dae"
+#define MOON_NAME		"models/ground.dae"
 #define ZOMBIE_NAME		"models/carcass_eater.dae"
 #define ZOMBIE2_NAME	"models/swampGhoul.dae"
 #define ZOMBIE3_NAME	"models/skeleton.dae"
@@ -42,10 +42,10 @@
 #define CASTLE_TEXTURE		"textures/yellow_brick.jpg"
 #define	GROUND_TEXTURE		"textures/grass.jpg"
 #define	TOWER_TEXTURE		"textures/creamy_brick.jpg"
-#define	GRASS_TEXTURE		"textures/grass.jpg"
+#define	SKY_TEXTURE			"textures/star-sky.jpg"
 #define	BELL_TEXTURE		"textures/milk_brick.jpg"
 #define	LAMP_TEXTURE		"textures/metal.jpg"
-#define	MOON_TEXTURE		"textures/moon_texture.jpg"
+#define	MOON_TEXTURE		"textures/ocean.jpg"
 #define	ZOMBIE_TEXTURE		"textures/eater.jpg"
 #define	ZOMBIE2_TEXTURE		"textures/swampGhoul.jpg"
 #define	ZOMBIE3_TEXTURE		"textures/bone.jpg"
@@ -125,11 +125,11 @@ int width = 1120;
 int height = 630;
 // Models
 ModelData castle, ground, tower, bell;
-ModelData veg, lamp, moon, zombie, zombie2, zombie3, skeleton, monster, bat;
+ModelData sky, lamp, moon, zombie, zombie2, zombie3, skeleton, monster, bat;
 // Terrain generation
 // ModelData terrain = generateTerrain(100, 100, 1.0f); // 100x100 grid with 1.0f size for each square
 // Textures
-unsigned int CASTLE_tex, GROUND_tex, TOWER_tex, GRASS_tex, BELL_tex, LAMP_tex, MOON_tex;
+unsigned int CASTLE_tex, GROUND_tex, TOWER_tex, SKY_tex, BELL_tex, LAMP_tex, MOON_tex;
 unsigned int ZOMBIE_tex, ZOMBIE2_tex, ZOMBIE3_tex, SKELETON_tex, MONSTER_tex, BAT_tex;
 // Buffers
 unsigned int VP_VBOs[14]; // vertex positions
@@ -294,8 +294,6 @@ struct Spotlight {
 
 Spotlight spotlights[4];
 
-// 3d Perspective
-mat4 persp_proj = perspective(45.0f, (float)width / (float)height, 0.1f, 1000.0f);
 // Loads Textures using ASSIMP
 #pragma region MESH LOADING
 /*----------------------------------------------------------------------------
@@ -489,7 +487,7 @@ void generateObjectBufferMesh() {
 	castle = load_mesh(CASTLE_NAME, 5.0f);
 	ground = load_mesh(GROUND_NAME, 10.0f);
 	tower = load_mesh(TOWER_NAME, 3.0f);
-	veg = load_mesh(GRASS_NAME);
+	sky = load_mesh(SKY_NAME);
 	bell = load_mesh(BELL_NAME, 5.0f);
 	lamp = load_mesh(LAMP_NAME);
 	moon = load_mesh(MOON_NAME);
@@ -503,7 +501,7 @@ void generateObjectBufferMesh() {
 	CASTLE_tex = load_tex(CASTLE_TEXTURE);
 	GROUND_tex = load_tex(GROUND_TEXTURE);
 	TOWER_tex = load_tex(TOWER_TEXTURE);
-	GRASS_tex = load_tex(GRASS_TEXTURE);
+	SKY_tex = load_tex(SKY_TEXTURE);
 	BELL_tex = load_tex(BELL_TEXTURE);
 	LAMP_tex = load_tex(LAMP_TEXTURE);
 	MOON_tex = load_tex(MOON_TEXTURE);
@@ -644,11 +642,11 @@ void generateObjectBufferMesh() {
 	loc2[13] = glGetAttribLocation(shaderProgramID, "vertex_normal");
 	loc2[14] = glGetAttribLocation(shaderProgramID, "vertex_texture");
 	glBindBuffer(GL_ARRAY_BUFFER, VN_VBOs[12]);
-	glBufferData(GL_ARRAY_BUFFER, veg.mPointCount * sizeof(vec3), &veg.mNormals[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sky.mPointCount * sizeof(vec3), &sky.mNormals[0], GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, VP_VBOs[12]);
-	glBufferData(GL_ARRAY_BUFFER, veg.mPointCount * sizeof(vec3), &veg.mVertices[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sky.mPointCount * sizeof(vec3), &sky.mVertices[0], GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, VT_VBOs[12]);
-	glBufferData(GL_ARRAY_BUFFER, veg.mPointCount * sizeof(vec2), &veg.mTextureCoords[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sky.mPointCount * sizeof(vec2), &sky.mTextureCoords[0], GL_STATIC_DRAW);
 	// Scene - Kennel
 	loc2[15] = glGetAttribLocation(shaderProgramID, "vertex_position");
 	loc2[16] = glGetAttribLocation(shaderProgramID, "vertex_normal");
@@ -667,7 +665,7 @@ void display() {
 	glEnable(GL_DEPTH_TEST); // enable depth-testing
 	glDepthMask(GL_TRUE); //update the depth buffer
 	glDepthFunc(GL_LESS); // depth-testing interprets a smaller value as "closer"
-	glClearColor(0.3f, 0.03f, 0.0f, 1.0f); // Darker scarlet color
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Darker scarlet color
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(shaderProgramID);
 	// Declare your uniform variables that will be used in your shader
@@ -699,7 +697,7 @@ void display() {
 
 	// Camera / View transformation
 	glm::mat4 view = glm::lookAt(cameraPos, cameraPos + cameraFront, cameraUp);
-	glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 100.0f);
+	glm::mat4 projection = glm::perspective(glm::radians(45.0f), (float)width / (float)height, 0.1f, 200.0f);
 
 	// Update view and projection matrices in the shader
 	glUniformMatrix4fv(view_mat_location, 1, GL_FALSE, glm::value_ptr(view));
@@ -711,8 +709,10 @@ void display() {
 
 	// Moon
 	mat4 moon_model = identity_mat4();
-	moon_model = translate(moon_model, vec3(-5.2f, 6.2f, -5.2f));
-	moon_model = scale(moon_model, vec3(5.0f, 5.0f, 5.0f));
+	moon_model = rotate_x_deg(moon_model, 45.0f); // Apply rotation
+	moon_model = rotate_y_deg(moon_model, 45.0f); // Apply rotation
+	moon_model = translate(moon_model, vec3(0.0f, -0.2f, 0.0f));
+	moon_model = scale(moon_model, vec3(100.0f, 100.0f, 100.0f));
 	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, moon_model.m);
 	glEnableVertexAttribArray(loc1[0]);
 	glBindBuffer(GL_ARRAY_BUFFER, VP_VBOs[0]);
@@ -965,22 +965,44 @@ void display() {
 		glDrawArrays(GL_TRIANGLES, 0, lamp.mPointCount);
 	}
 
-	// Root - Scene - Vegetation
-	mat4 grass = identity_mat4();
-	grass = scale(grass, vec3(0.2f, 0.2f, 0.2f)); // Scale can be adjusted if needed
-	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, grass.m);
-	glEnableVertexAttribArray(loc2[12]);
-	glBindBuffer(GL_ARRAY_BUFFER, VP_VBOs[12]);
-	glVertexAttribPointer(loc2[12], 3, GL_FLOAT, GL_FALSE, 0, NULL);
-	glEnableVertexAttribArray(loc2[13]);
-	glBindBuffer(GL_ARRAY_BUFFER, VN_VBOs[12]);
-	glVertexAttribPointer(loc2[13], 3, GL_FLOAT, GL_FALSE, 0, NULL);
-	glBindVertexArray(VAOs[0]);
-	glEnableVertexAttribArray(loc2[14]);
-	glBindBuffer(GL_ARRAY_BUFFER, VT_VBOs[12]);
-	glVertexAttribPointer(loc2[14], 2, GL_FLOAT, GL_FALSE, 0, NULL);
-	glBindTexture(GL_TEXTURE_2D, GRASS_tex);
-	glDrawArrays(GL_TRIANGLES, 0, veg.mPointCount);
+	// Scene - Sky
+	// Array of positions for kennel instances
+	vec3 skyPositions[] = {
+		vec3(0.0f, 0.0f, 0.5f), 
+		vec3(0.0f, 0.0f, -0.5f), 
+		vec3(0.0f, 0.5f, 0.0f),
+		vec3(0.0f, -0.5f, 0.0f),
+		vec3(0.5f, 0.0f, 0.0f),
+		vec3(-0.5f, 0.0f, 0.0f),
+	};
+
+	// Array of rotation angles (in degrees) for each kennel instance
+	float skyRotationsx[] = {
+		90,90,0,0,0,0
+	};
+	float skyRotationsz[] = {
+		0,0,0,0,90,90
+	};
+	for (int i = 0; i < 6; ++i) {
+		mat4 sky_model = identity_mat4();
+		sky_model = rotate_x_deg(sky_model, skyRotationsx[i]); // Apply rotation
+		sky_model = rotate_z_deg(sky_model, skyRotationsz[i]); // Apply rotation
+		sky_model = translate(sky_model, skyPositions[i]);
+		sky_model = scale(sky_model, vec3(115.0f, 115.0f, 115.0f)); // Scale can be adjusted if needed
+		glUniformMatrix4fv(matrix_location, 1, GL_FALSE, sky_model.m);
+		glEnableVertexAttribArray(loc2[12]);
+		glBindBuffer(GL_ARRAY_BUFFER, VP_VBOs[12]);
+		glVertexAttribPointer(loc2[12], 3, GL_FLOAT, GL_FALSE, 0, NULL);
+		glEnableVertexAttribArray(loc2[13]);
+		glBindBuffer(GL_ARRAY_BUFFER, VN_VBOs[12]);
+		glVertexAttribPointer(loc2[13], 3, GL_FLOAT, GL_FALSE, 0, NULL);
+		glBindVertexArray(VAOs[0]);
+		glEnableVertexAttribArray(loc2[14]);
+		glBindBuffer(GL_ARRAY_BUFFER, VT_VBOs[12]);
+		glVertexAttribPointer(loc2[14], 2, GL_FLOAT, GL_FALSE, 0, NULL);
+		glBindTexture(GL_TEXTURE_2D, SKY_tex);
+		glDrawArrays(GL_TRIANGLES, 0, sky.mPointCount);
+	}
 	// Root - Scene - Kennel
 	// Array of positions for kennel instances
 	vec3 kennelPositions[] = {
@@ -1025,13 +1047,6 @@ void display() {
 
 void updateScene() {
 	// Delta Calculation
-	static DWORD last_time = 0;
-	DWORD curr_time = timeGetTime();
-	if (last_time == 0)
-		last_time = curr_time;
-	float delta = (curr_time - last_time) * 0.001f;
-	last_time = curr_time;
-
 	float cameraSpeed = 0.1f; // adjust accordingly
 
 	glm::vec3 cameraRight = glm::normalize(glm::cross(cameraFront, cameraUp));
@@ -1088,13 +1103,6 @@ void updateScene() {
 		zombie2PosZ += directionToHumanZombie2.z * (movementSpeed + 0.002);
 	}
 	zombie2RotationAngle = atan2(-directionToHumanZombie2.z, directionToHumanZombie2.x) * (180.0 / 3.1415926);
-
-	
-
-	// Proximity Calculation: translation x,y,z - camera x,y,z
-	vec3 dist = vec3(-2.0f, 0.05f, 2.0f) - vec3(0.0f, 5.0f, 15.0f);
-	float x_distance = dist.v[0];
-	float z_distance = dist.v[2];
 	// Draw the next frame
 	glutPostRedisplay();
 }
