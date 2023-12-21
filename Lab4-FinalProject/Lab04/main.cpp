@@ -1,11 +1,10 @@
-// Windows includes (For Time, IO, etc.)
 #include <windows.h>
 #include <mmsystem.h>
 #include <iostream>
 #include <string>
 #include <stdio.h>
 #include <math.h>
-#include <vector> // STL dynamic memory.
+#include <vector>
 
 // OpenGL includes
 #include <GL/glew.h>
@@ -31,11 +30,11 @@
 #define SKY_NAME		"models/plane.dae"
 #define BELL_NAME		"models/bell.dae"
 #define LAMP_NAME		"models/street_light.dae"
-#define MOON_NAME		"models/ground.dae"
+#define SEA_NAME		"models/ground.dae"
 #define ZOMBIE_NAME		"models/carcass_eater.dae"
 #define ZOMBIE2_NAME	"models/swampGhoul.dae"
 #define ZOMBIE3_NAME	"models/skeleton.dae"
-#define SKELETON_NAME	"models/human.dae"
+#define HUMAN_NAME		"models/human.dae"
 #define MONSTER_NAME	"models/monster_selfmade.dae"
 #define BAT_NAME		"models/bat_selfmade.dae"
 // Textures to Load
@@ -45,11 +44,11 @@
 #define	SKY_TEXTURE			"textures/star-sky.jpg"
 #define	BELL_TEXTURE		"textures/milk_brick.jpg"
 #define	LAMP_TEXTURE		"textures/metal.jpg"
-#define	MOON_TEXTURE		"textures/ocean.jpg"
+#define	SEA_TEXTURE			"textures/ocean.jpg"
 #define	ZOMBIE_TEXTURE		"textures/eater.jpg"
 #define	ZOMBIE2_TEXTURE		"textures/swampGhoul.jpg"
 #define	ZOMBIE3_TEXTURE		"textures/bone.jpg"
-#define	SKELETON_TEXTURE	"textures/skin.jpg"
+#define	HUMAN_TEXTURE		"textures/skin.jpg"
 #define	MONSTER_TEXTURE		"textures/monster_skin.jpg"
 #define	BAT_TEXTURE			"textures/bat_skin.jpg"
 // Sounds to Load
@@ -74,7 +73,7 @@ float zombie3RotationAngle = 0.0f;
 
 float translationSpeed = 0.03f; // Adjust as needed
 float movementSpeed = 0.015f; // Adjust as needed for smooth chasing
-float collisionDistance = 6.0f; // Adjust as per the size of your models
+float collisionDistance = 6.0f; // Adjust as per the size of models
 // Check for collision with obstacles
 glm::vec3 obstacle1Pos(0.0f, 0.0f, 0.0f);
 glm::vec3 obstacle2Pos(zombiePosX, 0.0f, zombiePosZ);
@@ -125,12 +124,12 @@ int width = 1120;
 int height = 630;
 // Models
 ModelData castle, ground, tower, bell;
-ModelData sky, lamp, moon, zombie, zombie2, zombie3, skeleton, monster, bat;
+ModelData sky, lamp, sea, zombie, zombie2, zombie3, human, monster, bat;
 // Terrain generation
 // ModelData terrain = generateTerrain(100, 100, 1.0f); // 100x100 grid with 1.0f size for each square
 // Textures
-unsigned int CASTLE_tex, GROUND_tex, TOWER_tex, SKY_tex, BELL_tex, LAMP_tex, MOON_tex;
-unsigned int ZOMBIE_tex, ZOMBIE2_tex, ZOMBIE3_tex, SKELETON_tex, MONSTER_tex, BAT_tex;
+unsigned int CASTLE_tex, GROUND_tex, TOWER_tex, SKY_tex, BELL_tex, LAMP_tex, SEA_tex;
+unsigned int ZOMBIE_tex, ZOMBIE2_tex, ZOMBIE3_tex, HUMAN_tex, MONSTER_tex, BAT_tex;
 // Buffers
 unsigned int VP_VBOs[14]; // vertex positions
 unsigned int VN_VBOs[14]; // vertex normals
@@ -361,14 +360,14 @@ unsigned int load_tex(const char* file_name) {
 	glGenTextures(1, &texture);
 	glBindTexture(GL_TEXTURE_2D, texture);
 	// set the texture wrapping parameters
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	// set texture wrapping to GL_REPEAT (default wrapping method)
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	// set texture filtering parameters
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	// load image, create texture and generate mipmaps
 	int width, height, nrChannels;
-	stbi_set_flip_vertically_on_load(true); // tell stb_image.h to flip loaded texture's on the y-axis.
+	stbi_set_flip_vertically_on_load(true);
 	unsigned char* data = stbi_load(file_name, &width, &height, &nrChannels, 0);
 	if (data) {
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
@@ -490,11 +489,11 @@ void generateObjectBufferMesh() {
 	sky = load_mesh(SKY_NAME);
 	bell = load_mesh(BELL_NAME, 5.0f);
 	lamp = load_mesh(LAMP_NAME);
-	moon = load_mesh(MOON_NAME);
+	sea = load_mesh(SEA_NAME);
 	zombie = load_mesh(ZOMBIE_NAME);
 	zombie2 = load_mesh(ZOMBIE2_NAME);
 	zombie3 = load_mesh(ZOMBIE3_NAME);
-	skeleton = load_mesh(SKELETON_NAME);
+	human = load_mesh(HUMAN_NAME);
 	monster = load_mesh(MONSTER_NAME);
 	bat = load_mesh(BAT_NAME);
 	// load textures
@@ -504,11 +503,11 @@ void generateObjectBufferMesh() {
 	SKY_tex = load_tex(SKY_TEXTURE);
 	BELL_tex = load_tex(BELL_TEXTURE);
 	LAMP_tex = load_tex(LAMP_TEXTURE);
-	MOON_tex = load_tex(MOON_TEXTURE);
+	SEA_tex = load_tex(SEA_TEXTURE);
 	ZOMBIE_tex = load_tex(ZOMBIE_TEXTURE);
 	ZOMBIE2_tex = load_tex(ZOMBIE2_TEXTURE);
 	ZOMBIE3_tex = load_tex(ZOMBIE3_TEXTURE);
-	SKELETON_tex = load_tex(SKELETON_TEXTURE);
+	HUMAN_tex = load_tex(HUMAN_TEXTURE);
 	MONSTER_tex = load_tex(MONSTER_TEXTURE);
 	BAT_tex = load_tex(BAT_TEXTURE);
 	// Generate Buffers
@@ -517,16 +516,16 @@ void generateObjectBufferMesh() {
 	glGenBuffers(14, VT_VBOs); // texture buffer
 
 
-	// Scene - Moon
+	// Scene - Sea
 	loc1[0] = glGetAttribLocation(shaderProgramID, "vertex_position");
 	loc1[1] = glGetAttribLocation(shaderProgramID, "vertex_normal");
 	loc1[2] = glGetAttribLocation(shaderProgramID, "vertex_texture");
 	glBindBuffer(GL_ARRAY_BUFFER, VP_VBOs[0]);
-	glBufferData(GL_ARRAY_BUFFER, moon.mPointCount * sizeof(vec3), &moon.mVertices[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sea.mPointCount * sizeof(vec3), &sea.mVertices[0], GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, VN_VBOs[0]);
-	glBufferData(GL_ARRAY_BUFFER, moon.mPointCount * sizeof(vec3), &moon.mNormals[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sea.mPointCount * sizeof(vec3), &sea.mNormals[0], GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, VT_VBOs[0]);
-	glBufferData(GL_ARRAY_BUFFER, moon.mPointCount * sizeof(vec2), &moon.mTextureCoords[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sea.mPointCount * sizeof(vec2), &sea.mTextureCoords[0], GL_STATIC_DRAW);
 	// Scene - Zombie
 	loc1[3] = glGetAttribLocation(shaderProgramID, "vertex_position");
 	loc1[4] = glGetAttribLocation(shaderProgramID, "vertex_normal");
@@ -552,11 +551,11 @@ void generateObjectBufferMesh() {
 	loc1[10] = glGetAttribLocation(shaderProgramID, "vertex_normal");
 	loc1[11] = glGetAttribLocation(shaderProgramID, "vertex_texture");
 	glBindBuffer(GL_ARRAY_BUFFER, VN_VBOs[3]);
-	glBufferData(GL_ARRAY_BUFFER, skeleton.mPointCount * sizeof(vec3), &skeleton.mNormals[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, human.mPointCount * sizeof(vec3), &human.mNormals[0], GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, VP_VBOs[3]);
-	glBufferData(GL_ARRAY_BUFFER, skeleton.mPointCount * sizeof(vec3), &skeleton.mVertices[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, human.mPointCount * sizeof(vec3), &human.mVertices[0], GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, VT_VBOs[3]);
-	glBufferData(GL_ARRAY_BUFFER, skeleton.mPointCount * sizeof(vec2), &skeleton.mTextureCoords[0], GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, human.mPointCount * sizeof(vec2), &human.mTextureCoords[0], GL_STATIC_DRAW);
 	// Scene - Zombie3
 	loc1[12] = glGetAttribLocation(shaderProgramID, "vertex_position");
 	loc1[13] = glGetAttribLocation(shaderProgramID, "vertex_normal");
@@ -597,7 +596,7 @@ void generateObjectBufferMesh() {
 	//glBufferData(GL_ARRAY_BUFFER, terrain.mPointCount * sizeof(vec3), &terrain.mVertices[0], GL_STATIC_DRAW);
 	//glBindBuffer(GL_ARRAY_BUFFER, VT_VBOs[7]);
 	//glBufferData(GL_ARRAY_BUFFER, terrain.mPointCount * sizeof(vec2), &terrain.mTextureCoords[0], GL_STATIC_DRAW);
-	// Scene - CASTLE
+	// Scene - Castle
 	loc2[0] = glGetAttribLocation(shaderProgramID, "vertex_position");
 	loc2[1] = glGetAttribLocation(shaderProgramID, "vertex_normal");
 	loc2[2] = glGetAttribLocation(shaderProgramID, "vertex_texture");
@@ -607,7 +606,7 @@ void generateObjectBufferMesh() {
 	glBufferData(GL_ARRAY_BUFFER, castle.mPointCount * sizeof(vec3), &castle.mVertices[0], GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, VT_VBOs[8]);
 	glBufferData(GL_ARRAY_BUFFER, castle.mPointCount * sizeof(vec2), &castle.mTextureCoords[0], GL_STATIC_DRAW);
-	// Scene - ground
+	// Scene - Ground
 	loc2[3] = glGetAttribLocation(shaderProgramID, "vertex_position");
 	loc2[4] = glGetAttribLocation(shaderProgramID, "vertex_normal");
 	loc2[5] = glGetAttribLocation(shaderProgramID, "vertex_texture");
@@ -617,7 +616,7 @@ void generateObjectBufferMesh() {
 	glBufferData(GL_ARRAY_BUFFER, ground.mPointCount * sizeof(vec3), &ground.mVertices[0], GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, VT_VBOs[9]);
 	glBufferData(GL_ARRAY_BUFFER, ground.mPointCount * sizeof(vec2), &ground.mTextureCoords[0], GL_STATIC_DRAW);
-	// Scene - bell
+	// Scene - Bell
 	loc2[6] = glGetAttribLocation(shaderProgramID, "vertex_position");
 	loc2[7] = glGetAttribLocation(shaderProgramID, "vertex_normal");
 	loc2[8] = glGetAttribLocation(shaderProgramID, "vertex_texture");
@@ -627,7 +626,7 @@ void generateObjectBufferMesh() {
 	glBufferData(GL_ARRAY_BUFFER, bell.mPointCount * sizeof(vec3), &bell.mVertices[0], GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, VT_VBOs[10]);
 	glBufferData(GL_ARRAY_BUFFER, bell.mPointCount * sizeof(vec2), &bell.mTextureCoords[0], GL_STATIC_DRAW);
-	// Scene - lamp
+	// Scene - Lamp
 	loc2[9] = glGetAttribLocation(shaderProgramID, "vertex_position");
 	loc2[10] = glGetAttribLocation(shaderProgramID, "vertex_normal");
 	loc2[11] = glGetAttribLocation(shaderProgramID, "vertex_texture");
@@ -637,7 +636,7 @@ void generateObjectBufferMesh() {
 	glBufferData(GL_ARRAY_BUFFER, lamp.mPointCount * sizeof(vec3), &lamp.mVertices[0], GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, VT_VBOs[11]);
 	glBufferData(GL_ARRAY_BUFFER, lamp.mPointCount * sizeof(vec2), &lamp.mTextureCoords[0], GL_STATIC_DRAW);
-	// Scene - Vegetation
+	// Scene - Sky
 	loc2[12] = glGetAttribLocation(shaderProgramID, "vertex_position");
 	loc2[13] = glGetAttribLocation(shaderProgramID, "vertex_normal");
 	loc2[14] = glGetAttribLocation(shaderProgramID, "vertex_texture");
@@ -647,7 +646,7 @@ void generateObjectBufferMesh() {
 	glBufferData(GL_ARRAY_BUFFER, sky.mPointCount * sizeof(vec3), &sky.mVertices[0], GL_STATIC_DRAW);
 	glBindBuffer(GL_ARRAY_BUFFER, VT_VBOs[12]);
 	glBufferData(GL_ARRAY_BUFFER, sky.mPointCount * sizeof(vec2), &sky.mTextureCoords[0], GL_STATIC_DRAW);
-	// Scene - Kennel
+	// Scene - Tower
 	loc2[15] = glGetAttribLocation(shaderProgramID, "vertex_position");
 	loc2[16] = glGetAttribLocation(shaderProgramID, "vertex_normal");
 	loc2[17] = glGetAttribLocation(shaderProgramID, "vertex_texture");
@@ -665,7 +664,7 @@ void display() {
 	glEnable(GL_DEPTH_TEST); // enable depth-testing
 	glDepthMask(GL_TRUE); //update the depth buffer
 	glDepthFunc(GL_LESS); // depth-testing interprets a smaller value as "closer"
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Darker scarlet color
+	glClearColor(0.0f, 0.0f, 0.0f, 1.0f); // Dark background
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glUseProgram(shaderProgramID);
 	// Declare your uniform variables that will be used in your shader
@@ -685,7 +684,7 @@ void display() {
 	spotlights[2] = { glm::vec3(-2.2f, 4.0f, 2.2f), glm::vec3(0.0f, -1.0f, 0.0f), glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(17.5f)), glm::vec3(1.0f, 1.0f, 1.0f) };
 	spotlights[3] = { glm::vec3(-2.2f, 4.0f, -2.2f), glm::vec3(0.0f, -1.0f, 0.0f), glm::cos(glm::radians(12.5f)), glm::cos(glm::radians(17.5f)), glm::vec3(1.0f, 1.0f, 1.0f) };
 
-	// In your display function, pass the spotlight properties to the shader
+	// In display function, pass the spotlight properties to the shader
 	for (int i = 0; i < 4; i++) {
 		std::string uniformName = "spotlights[" + std::to_string(i) + "]";
 		glUniform3fv(glGetUniformLocation(shaderProgramID, (uniformName + ".position").c_str()), 1, glm::value_ptr(spotlights[i].position));
@@ -707,13 +706,13 @@ void display() {
 	glUniform3fv(viewPos_location, 1, glm::value_ptr(cameraPos));
 	glUniform3fv(lightColor_location, 1, glm::value_ptr(lightColor));
 
-	// Moon
-	mat4 moon_model = identity_mat4();
-	moon_model = rotate_x_deg(moon_model, 45.0f); // Apply rotation
-	moon_model = rotate_y_deg(moon_model, 45.0f); // Apply rotation
-	moon_model = translate(moon_model, vec3(0.0f, -0.2f, 0.0f));
-	moon_model = scale(moon_model, vec3(100.0f, 100.0f, 100.0f));
-	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, moon_model.m);
+	// Scene - Sea
+	mat4 sea_model = identity_mat4();
+	sea_model = rotate_x_deg(sea_model, 45.0f); // Apply rotation
+	sea_model = rotate_y_deg(sea_model, 45.0f); // Apply rotation
+	sea_model = translate(sea_model, vec3(0.0f, -0.2f, 0.0f));
+	sea_model = scale(sea_model, vec3(100.0f, 100.0f, 100.0f));
+	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, sea_model.m);
 	glEnableVertexAttribArray(loc1[0]);
 	glBindBuffer(GL_ARRAY_BUFFER, VP_VBOs[0]);
 	glVertexAttribPointer(loc1[0], 3, GL_FLOAT, GL_FALSE, 0, NULL);
@@ -724,9 +723,9 @@ void display() {
 	glEnableVertexAttribArray(loc1[2]);
 	glBindBuffer(GL_ARRAY_BUFFER, VT_VBOs[0]);
 	glVertexAttribPointer(loc1[2], 2, GL_FLOAT, GL_FALSE, 0, NULL);
-	glBindTexture(GL_TEXTURE_2D, MOON_tex);
-	glDrawArrays(GL_TRIANGLES, 0, moon.mPointCount);
-	// Zombie
+	glBindTexture(GL_TEXTURE_2D, SEA_tex);
+	glDrawArrays(GL_TRIANGLES, 0, sea.mPointCount);
+	// Scene - Zombie
 	mat4 zombie_model = identity_mat4();
 	zombie_model = rotate_y_deg(zombie_model, zombieRotationAngle); // Apply rotation
 	zombie_model = translate(zombie_model, vec3(zombiePosX, 0.5f, zombiePosZ));
@@ -744,7 +743,7 @@ void display() {
 	glVertexAttribPointer(loc1[5], 2, GL_FLOAT, GL_FALSE, 0, NULL);
 	glBindTexture(GL_TEXTURE_2D, ZOMBIE_tex);
 	glDrawArrays(GL_TRIANGLES, 0, zombie.mPointCount);
-	// Zombie 2
+	// Scene - Zombie 2
 	mat4 zombie_model2 = identity_mat4();
 	zombie_model2 = rotate_y_deg(zombie_model2, 90.0f); // Apply rotation
 	zombie_model2 = rotate_y_deg(zombie_model2, zombie2RotationAngle); // Apply rotation
@@ -764,12 +763,12 @@ void display() {
 	glBindTexture(GL_TEXTURE_2D, ZOMBIE2_tex);
 	glDrawArrays(GL_TRIANGLES, 0, zombie2.mPointCount);
 	// Scene - Skeleton
-	mat4 skeleton_model = identity_mat4();
-	skeleton_model = rotate_x_deg(skeleton_model, 90.0f); // Apply rotation
-	skeleton_model = rotate_y_deg(skeleton_model, 90.0f); // Apply rotation
-	skeleton_model = rotate_y_deg(skeleton_model, humanRotationAngle); // Apply rotation
-	skeleton_model = translate(skeleton_model, vec3(humanPosX, 0.5f, humanPosZ));
-	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, skeleton_model.m);
+	mat4 human_model = identity_mat4();
+	human_model = rotate_x_deg(human_model, 90.0f); // Apply rotation
+	human_model = rotate_y_deg(human_model, 90.0f); // Apply rotation
+	human_model = rotate_y_deg(human_model, humanRotationAngle); // Apply rotation
+	human_model = translate(human_model, vec3(humanPosX, 0.5f, humanPosZ));
+	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, human_model.m);
 	glEnableVertexAttribArray(loc1[9]);
 	glBindBuffer(GL_ARRAY_BUFFER, VP_VBOs[3]);
 	glVertexAttribPointer(loc1[9], 3, GL_FLOAT, GL_FALSE, 0, NULL);
@@ -780,10 +779,9 @@ void display() {
 	glEnableVertexAttribArray(loc1[11]);
 	glBindBuffer(GL_ARRAY_BUFFER, VT_VBOs[3]);
 	glVertexAttribPointer(loc1[11], 2, GL_FLOAT, GL_FALSE, 0, NULL);
-	glBindTexture(GL_TEXTURE_2D, SKELETON_tex);
-	glDrawArrays(GL_TRIANGLES, 0, skeleton.mPointCount);
-	// Zombie 3
-	// Array of positions for zombie instances
+	glBindTexture(GL_TEXTURE_2D, HUMAN_tex);
+	glDrawArrays(GL_TRIANGLES, 0, human.mPointCount);
+	// Scene - Zombie 3
 	vec3 zombie3Positions[] = {
 		vec3(3.0f, 0.0f, -3.0f),  // Original position
 		vec3(-3.0f, 0.0f, -3.0f),  // top left position
@@ -816,7 +814,7 @@ void display() {
 		glBindTexture(GL_TEXTURE_2D, ZOMBIE3_tex);
 		glDrawArrays(GL_TRIANGLES, 0, zombie3.mPointCount);
 	}
-	// Monster
+	// Scene - Monster
 	mat4 monster_model = identity_mat4();
 	monster_model = rotate_x_deg(monster_model, 90.0f); // Apply rotation
 	monster_model = scale(monster_model, vec3(50.0f, 50.0f, 50.0f));
@@ -834,8 +832,7 @@ void display() {
 	glVertexAttribPointer(loc1[17], 2, GL_FLOAT, GL_FALSE, 0, NULL);
 	glBindTexture(GL_TEXTURE_2D, MONSTER_tex);
 	glDrawArrays(GL_TRIANGLES, 0, monster.mPointCount);
-	// Bat
-	// Array of positions for kennel instances
+	// Scene - Bat
 	vec3 batPositions[] = {
 		vec3(1.5f, 3.0f, -1.5f),    // top right position lower
 		vec3(-1.5f, 3.0f, -1.5f),   // top left position lower
@@ -846,14 +843,13 @@ void display() {
 		vec3(0.0f, 3.5f, 1.5f),     // top position upper
 		vec3(0.0f, 3.5f, -1.5f)     // down position upper
 	};
-	// Array of rotation angles (in degrees) for each kennel instance
 	float batRotations[] = {
 		90,180,0,270,0,180,270,90
 	};
 	for (int i = 0; i < 8; ++i) {
 		mat4 bat_model = identity_mat4();
 		bat_model = rotate_y_deg(bat_model, batRotations[i]); // Apply rotation
-		bat_model = translate(bat_model, batPositions[i]); // update y values during animation
+		bat_model = translate(bat_model, batPositions[i]);
 		bat_model = scale(bat_model, vec3(5.0f, 5.0f, 5.0f));
 		float angle2 = elapsedTime * rotationSpeed * 10;
 		bat_model = rotate_y_deg(bat_model, angle2);
@@ -886,10 +882,10 @@ void display() {
 	//glVertexAttribPointer(loc1[23], 2, GL_FLOAT, GL_FALSE, 0, NULL);
 	//glBindTexture(GL_TEXTURE_2D, GRASS_tex);
 	//glDrawArrays(GL_TRIANGLES, 0, terrain.mPointCount);
-	// Root - Scene - CASTLE
+	// Scene - Castle
 	mat4 castle_model = identity_mat4();
 	castle_model = translate(castle_model, vec3(0.0f, -10.0f, 0.0f));
-	castle_model = scale(castle_model, vec3(0.001f, 0.001f, 0.001f)); // Add the scaling transformation here
+	castle_model = scale(castle_model, vec3(0.001f, 0.001f, 0.001f));
 	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, castle_model.m);
 	glEnableVertexAttribArray(loc2[0]);
 	glBindBuffer(GL_ARRAY_BUFFER, VP_VBOs[8]);
@@ -903,9 +899,9 @@ void display() {
 	glVertexAttribPointer(loc2[2], 2, GL_FLOAT, GL_FALSE, 0, NULL);
 	glBindTexture(GL_TEXTURE_2D, CASTLE_tex);
 	glDrawArrays(GL_TRIANGLES, 0, castle.mPointCount);
-	// Child - Scene - ground
+	// Scene - Ground
 	mat4 gound_model = identity_mat4();
-	gound_model = scale(gound_model, vec3(60.0f, 60.0f, 60.0f)); // Add the scaling transformation here
+	gound_model = scale(gound_model, vec3(60.0f, 60.0f, 60.0f)); 
 	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, gound_model.m);
 	glEnableVertexAttribArray(loc2[3]);
 	glBindBuffer(GL_ARRAY_BUFFER, VP_VBOs[9]);
@@ -919,12 +915,12 @@ void display() {
 	glVertexAttribPointer(loc2[5], 2, GL_FLOAT, GL_FALSE, 0, NULL);
 	glBindTexture(GL_TEXTURE_2D, GROUND_tex);
 	glDrawArrays(GL_TRIANGLES, 0, ground.mPointCount);
-	// Scene - bell
-	mat4 belltower = identity_mat4();
-	belltower = translate(belltower, vec3(0.0f, 0.5f, 0.0f));
-	belltower = rotate_y_deg(belltower, 180.0f); // Apply rotation
-	belltower = scale(belltower, vec3(3.0f, 3.0f, 3.0f)); // Add the scaling transformation here
-	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, belltower.m);
+	// Scene - Bell
+	mat4 bell_model = identity_mat4();
+	bell_model = translate(bell_model, vec3(0.0f, 0.5f, 0.0f));
+	bell_model = rotate_y_deg(bell_model, 180.0f); // Apply rotation
+	bell_model = scale(bell_model, vec3(3.0f, 3.0f, 3.0f)); // Add the scaling transformation here
+	glUniformMatrix4fv(matrix_location, 1, GL_FALSE, bell_model.m);
 	glEnableVertexAttribArray(loc2[6]);
 	glBindBuffer(GL_ARRAY_BUFFER, VP_VBOs[10]);
 	glVertexAttribPointer(loc2[6], 3, GL_FLOAT, GL_FALSE, 0, NULL);
@@ -937,8 +933,7 @@ void display() {
 	glVertexAttribPointer(loc2[8], 2, GL_FLOAT, GL_FALSE, 0, NULL);
 	glBindTexture(GL_TEXTURE_2D, BELL_tex);
 	glDrawArrays(GL_TRIANGLES, 0, bell.mPointCount);
-	// Child - Scene - lamp
-	// Array of positions for lamp instances
+	// Scene - lamp
 	vec3 lampPositions[] = {
 		vec3(12.0f, 0.0f, -12.0f),  // Original position
 		vec3(-12.0f, 0.0f, -12.0f),  // top left position
@@ -949,7 +944,7 @@ void display() {
 	for (int i = 0; i < 4; ++i) {
 		mat4 light = identity_mat4();
 		light = translate(light, lampPositions[i]);
-		light = scale(light, vec3(0.2f, 0.2f, 0.2f)); // Scale can be adjusted if needed
+		light = scale(light, vec3(0.2f, 0.2f, 0.2f));
 		glUniformMatrix4fv(matrix_location, 1, GL_FALSE, light.m);
 		glEnableVertexAttribArray(loc2[9]);
 		glBindBuffer(GL_ARRAY_BUFFER, VP_VBOs[11]);
@@ -966,7 +961,6 @@ void display() {
 	}
 
 	// Scene - Sky
-	// Array of positions for kennel instances
 	vec3 skyPositions[] = {
 		vec3(0.0f, 0.0f, 0.5f), 
 		vec3(0.0f, 0.0f, -0.5f), 
@@ -975,8 +969,6 @@ void display() {
 		vec3(0.5f, 0.0f, 0.0f),
 		vec3(-0.5f, 0.0f, 0.0f),
 	};
-
-	// Array of rotation angles (in degrees) for each kennel instance
 	float skyRotationsx[] = {
 		90,90,0,0,0,0
 	};
@@ -988,7 +980,7 @@ void display() {
 		sky_model = rotate_x_deg(sky_model, skyRotationsx[i]); // Apply rotation
 		sky_model = rotate_z_deg(sky_model, skyRotationsz[i]); // Apply rotation
 		sky_model = translate(sky_model, skyPositions[i]);
-		sky_model = scale(sky_model, vec3(115.0f, 115.0f, 115.0f)); // Scale can be adjusted if needed
+		sky_model = scale(sky_model, vec3(115.0f, 115.0f, 115.0f));
 		glUniformMatrix4fv(matrix_location, 1, GL_FALSE, sky_model.m);
 		glEnableVertexAttribArray(loc2[12]);
 		glBindBuffer(GL_ARRAY_BUFFER, VP_VBOs[12]);
@@ -1003,42 +995,35 @@ void display() {
 		glBindTexture(GL_TEXTURE_2D, SKY_tex);
 		glDrawArrays(GL_TRIANGLES, 0, sky.mPointCount);
 	}
-	// Root - Scene - Kennel
+	// Scene - Kennel
 	// Array of positions for kennel instances
-	vec3 kennelPositions[] = {
+	vec3 towerPositions[] = {
 		vec3(11.0f, 0.0f, -11.0f),  // Original position
 		vec3(-11.0f, 0.0f, -11.0f),  // top left position
 		vec3(9.0f, 0.0f,  11.5f),  // bottom right position
 		vec3(-12.0f, 0.0f,  11.0f)   // bottom left position
 	};
 
-	// Array of rotation angles (in degrees) for each kennel instance
-	float kennelRotations[] = {
+	float towerRotations[] = {
 		0,0,180,180
 	};
 
 	for (int i = 0; i < 4; ++i) {
-		mat4 kennelMat = identity_mat4();
-		kennelMat = rotate_y_deg(kennelMat, kennelRotations[i]); // Apply rotation
-		kennelMat = translate(kennelMat, kennelPositions[i]);
-		kennelMat = scale(kennelMat, vec3(2.0f, 2.0f, 2.0f)); // Scale can be adjusted if needed
-
-		glUniformMatrix4fv(glGetUniformLocation(shaderProgramID, "model"), 1, GL_FALSE, kennelMat.m);
-
+		mat4 stone_tower = identity_mat4();
+		stone_tower = rotate_y_deg(stone_tower, towerRotations[i]); // Apply rotation
+		stone_tower = translate(stone_tower, towerPositions[i]);
+		stone_tower = scale(stone_tower, vec3(2.0f, 2.0f, 2.0f)); // Scale can be adjusted if needed
+		glUniformMatrix4fv(glGetUniformLocation(shaderProgramID, "model"), 1, GL_FALSE, stone_tower.m);
 		glEnableVertexAttribArray(loc2[15]);
 		glBindBuffer(GL_ARRAY_BUFFER, VP_VBOs[13]);
 		glVertexAttribPointer(loc2[15], 3, GL_FLOAT, GL_FALSE, 0, NULL);
-
 		glEnableVertexAttribArray(loc2[16]);
 		glBindBuffer(GL_ARRAY_BUFFER, VN_VBOs[13]);
 		glVertexAttribPointer(loc2[16], 3, GL_FLOAT, GL_FALSE, 0, NULL);
-
 		glBindVertexArray(VAOs[0]);
-
 		glEnableVertexAttribArray(loc2[17]);
 		glBindBuffer(GL_ARRAY_BUFFER, VT_VBOs[13]);
 		glVertexAttribPointer(loc2[17], 2, GL_FLOAT, GL_FALSE, 0, NULL);
-
 		glBindTexture(GL_TEXTURE_2D, TOWER_tex);
 		glDrawArrays(GL_TRIANGLES, 0, tower.mPointCount);
 	}
@@ -1070,7 +1055,7 @@ void updateScene() {
 	if (KeyLeft) humanPosX -= translationSpeed;
 	if (KeyRight) humanPosX += translationSpeed;
 	// Define a threshold distance for when to stop chasing
-	const float stopChasingDistance = 0.05f;
+	const float stopChasingDistance = 0.1f;
 	// Calculate rotation angle
 	if (humanPosX != lastPosX || humanPosZ != lastPosZ) {
 		humanRotationAngle = atan2(lastPosZ - humanPosZ, humanPosX - lastPosX) * (180.0 / 3.1415926);
@@ -1125,24 +1110,19 @@ void init()
 
 int main(int argc, char** argv) {
 	startTime = glutGet(GLUT_ELAPSED_TIME); // Record the start time
-	// Set up the window
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGB);
 	glutInitWindowSize(width, height);
 	glutCreateWindow("Apocalypse");
-	// Tell glut where the display function is
-	// Tell glut where the display function is
 	glutDisplayFunc(display);
 	glutIdleFunc(updateScene);
 	glutWarpPointer(width / 2, height / 2);
-	// A call to glewInit() must be done after glut is initialized!
 	GLenum res = glewInit();
 	// Check for any errors
 	if (res != GLEW_OK) {
 		fprintf(stderr, "Error: '%s'\n", glewGetErrorString(res));
 		return 1;
 	}
-	// Set up objects and shaders
 	init();
 	//PlaySound(TEXT(AMBIENT), NULL, SND_ASYNC);
 	glutMainLoop();
